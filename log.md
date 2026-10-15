@@ -158,3 +158,10 @@ append-only。只准往下加，不准改舊的。格式見 [CLAUDE.md](CLAUDE.m
 - 新增 `raw/hanoi-trip-2026-10/google-maps-樂天中心附近商場-2026-10-15.md`；動了 `output/河內行程.html`：1/1 新增「行程」卡 Vincom Center Metropolis，加樂天中心↔Vincom 步行列（4 分、300 公尺）、摘要一行、地圖兩個點（樂天中心、Vincom，座標取自 Google 地圖網址）；Lotte Mall West Lake 列入 1/1 備選
 - Google 地圖搜尋樂天中心附近商場，只有 Vincom Metropolis 在步行範圍；Lotte Mall West Lake 開車 22 分、5.7 公里，所以只列備選，沒排進行程。備份在 scratchpad
 - 待辦：Vincom 開門時間與 1/1 營業未確認；兩處先後順序未決；要不要把 West Lake 排進行程待使用者決定
+
+## [2026-10-15] write | 新增 wiki 題目 hanoi-sights：景點資料 15 頁
+- 使用者要求把景點資訊整理成知識庫。新增 `wiki/hanoi-sights/` 的 README 與 15 頁 entity（市區 13、陶瓷村、寧平合一頁）
+- 資料只從 raw 取並附回溯；`output/河內行程.html` 有、raw 沒有的（多數票價、龍邊與同春營業時段、跨年往年資料、寧平包車價等）放在各頁「未確認」，標明 raw 沒有存
+- 沒收：餐廳、酒吧、住宿、機場（不是景點）、下龍灣（只有業者資料）。景點簡介裡憑記憶的說法（例如文廟是第一所大學、火爐監獄是殖民時期監獄）沒有收
+- `wiki/index.md` 加一列；「不在 wiki 裡的」表裡 raw、output「目前為空」已過期，改成現況
+- 待辦：龍邊、同春、寧平各點座標沒查；raw 沒存的票價要補來源才能升級
