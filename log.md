@@ -241,9 +241,19 @@ append-only。只准往下加，不准改舊的。格式見 [CLAUDE.md](CLAUDE.m
 - 只改呈現，沒有新事實，不涉及 CLAUDE.md 新增的「output 事實先進 wiki」；下龍灣、寧平座標已在 wiki（另一工作階段寫入）
 - 390px 測過：7 張地圖標記狀態符合預期，無 console 錯誤，無水平捲動
 
+## [2026-10-15] write | 收斂規則：資料流向 raw → wiki → output，寫進 CLAUDE.md 與 README
+- 使用者要求把規則收斂進 README 與 CLAUDE.md。備份在 scratchpad
+- `CLAUDE.md`：§一加資料流向一句，output 列註明只取 wiki；§二加「會重用的跟一次性的分開」；§五第 6 條（上一筆加的 output 規則）移到 §七，原位改成三條：決定回溯到 log、舊資料標「raw 沒有存」（新資料一律先存 raw）、估值與推算要標；§七改成四個操作，新增 Write（改產出物的五步）；Lint 加第 7 項「output 與 wiki 不一致」；§九 main-agent 第 1、8、9 條配合修改
+- 我的判斷：舊 §九第 8 條（人說先不要歸檔就不寫 wiki）跟「output 只取 wiki」會衝突。我定成「output 也不加新事實；人堅持就照做，log 寫『待補 wiki』」。使用者可以推翻
+- `README.md`：加資料流向與「五條要記住的規則」，「怎麼用」加改產出物的說法
+- `wiki/hanoi-sights/README.md`：行程快照欄原寫「以 output 為準」，跟新規則相反，改成以 `hanoi-trip-2026-10/行程.md` 為準
+
 ## [2026-10-15] write | 寧平地圖補上 Mua 洞與白殿寺
 - 使用者「照你推薦」。先改 `wiki/hanoi-sights/寧平.md`（座標表兩列由「未定」改為選定值，抬頭更正同步），再改 `output/河內行程.html`
 - Mua 洞：標售票入口 20.23096, 105.93763（OSM 與 Google 差 17 m，是下車處）。山洞／山頂在約 600 m 外，沒標
 - 白殿寺：標 Google「Chùa Bái Đính」20.2758949, 105.8657707，與 OSM node 11101746405 差 80 m。寺院範圍大，點是哪一棟未確認，彈窗已註明
 - 12/30 地圖說明的「相差都在 71 公尺內」改為 80 公尺內。來源：raw/hanoi-trip-2026-10/座標-下龍灣寧平-sub-agent回報-2026-10-15.md
 - 測過：12/30 地圖 6 個備選點加住宿，無 console 錯誤
+
+## [2026-10-15] write | §九第 8 條：新規則蓋舊規則
+- 使用者回「新蓋舊」。動了 `CLAUDE.md` §九 main-agent 第 8 條：「先不要歸檔」不再擋 wiki，要進 output 的事實照樣先寫 wiki；「檔案放本地」仍是不發布到網上。取代上一筆我提的「人堅持就照做、log 寫待補 wiki」
