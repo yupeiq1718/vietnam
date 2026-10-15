@@ -105,12 +105,12 @@
   .map { height: 420px; width: 100%; }
   @media (max-width: 760px) { .map { height: 300px; } }
   .daymap .legend { margin: 0; }
-  .pin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.45); }
-  .pin.sight { background: #1d6a73; }
-  .pin.food { background: #c0561a; }
-  .pin.bar { background: #2b3a67; }
-  .pin.air { background: #14262b; border-radius: 3px; }
+  /* 地圖標記只有四種，大小一致：行程＝實心圓（卡片實線框的青綠）、備選＝空心圓（卡片虛線框的橘褐）、住宿與機場＝方塊 */
+  .pin { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.45); }
+  .pin.sure { background: #1d6a73; }
+  .pin.alt { background: #fff; border: 4px solid #9a5a0a; box-shadow: 0 0 0 1px rgba(0,0,0,.3); }
   .pin.hotel { background: #b3261e; border-radius: 3px; }
+  .pin.air { background: #14262b; border-radius: 3px; }
   .leaflet-popup-content { font-family: var(--font-body); font-size: 13px; line-height: 1.5; margin: 10px 12px; color: #14262b; }
   .leaflet-popup-content b { font-size: 14px; }
 
@@ -394,7 +394,7 @@
     { name: '近郊一日遊', hint: '要出城', items: [
       { n: '寧平', q: 'Ninh Binh', tags: ['全日'], d: '12/30 包車往返（你指定）。包車全日一車約 USD 99–225（含導遊的行程，2026 年旅遊網站指南）；單程接送約 USD 50–70（2025 指南）。4 人座與 7 人座的價差未確認。門票通常不含：長安約 VND 250,000 每人（含船，售票 7:00–16:00，船程 2.5–3 小時），Mua 洞約 VND 100,000 每人。距離約 95 公里，走高速公路，車程約 1.5–2 小時。收費站平常塞 20 分鐘，尖峰到 45 分鐘。過路費、停車費、司機午餐、超時費誰付，要問車行。時間試算（我的估算）：8:00 出發，約 10:00 到長安，約 14:15 上 Mua 洞，約 18:00–18:30 回到飯店。12 月常有霧與毛毛雨，約 10–20 度。前一晚 12/29 約 20:00–20:30 才回到飯店，8:00 出發會累，可考慮 8:30。4 人成本粗估（USD，以 1 USD ≈ 25,000 VND 換算，不含午餐、小費）：車 99–225，門票 4 人約 56（每人 VND 350,000），合計約 155–281，每人約 39–70。', was: '你指定 12/30' }
     ]},
-    { name: '寧平景點', hint: '12/30 · 全部未決 · 內容憑記憶，未核對', items: [
+    { name: '寧平景點', hint: '12/30 · 全部未決 · 內容憑記憶，未核對', note: '寧平景點的內容憑記憶，未核對。', items: [
       { n: '長安（Trang An）坐船', q: 'Trang An Scenic Landscape Complex Ninh Binh', qfull: true, tags: ['半日'], d: '小船穿過石灰岩山洞與稻田，一趟約 2–3 小時。跟三谷二選一。船票、營業時間、冬季是否營運皆未確認。' },
       { n: '三谷（Tam Coc）坐船', q: 'Tam Coc Ninh Binh', qfull: true, tags: ['半日'], d: '沿河穿過山洞與稻田，時間比長安短。跟長安二選一。12 月稻田是收割後的樣子，我不確定景色。船票與營業時間未確認。' },
       { n: 'Mua 洞觀景台', q: 'Hang Mua Ninh Binh', qfull: true, tags: ['半日'], d: '爬石階上山頂，看整片河谷。要爬幾百階。12 月可能起霧。階數、票價、開放時間未確認。' },
@@ -406,7 +406,7 @@
       { n: '越南民族學博物館', q: 'Vietnam Museum of Ethnology', tags: ['半日'], d: '8:30–17:30，週一與春節休館，12/31（週四）有開。成人 40,000 越南盾。距舊城區約 8 公里，建議叫 Grab。來源：官方網站。', was: '原草案 12/31，改列 1/1', link: ['https://vme.org.vn', '官網（網址來自搜尋結果，我沒能開啟，未確認）'] },
       { n: '西湖與鎮國寺', q: 'Tran Quoc Pagoda', tags: ['半日'], d: '免費。開放時間各來源不一致，下午去兩種說法都涵蓋。距舊城區約 4 公里，Grab 約 50,000–100,000 越南盾。', was: '原草案 12/31，改列 1/1' }
     ]},
-    { name: '12/31 跨年酒吧', hint: '六選一 · 11 月再決定', items: [
+    { name: '12/31 跨年酒吧', hint: '六選一 · 11 月再決定', note: '跨年酒吧六選一，11 月再決定。', items: [
       { n: 'Moonlight Sky Bar', tags: ['夜間'], nye: true, d: '17:00–24:00（官網）。步行 2.0 公里、28 分。360 度看還劍湖、紅河、舊城區。官網沒有跨年活動或套餐。細節見下方比較表。' },
       { n: 'Diamond Sky Bar', tags: ['夜間'], nye: true, d: '16:00–24:00。步行 1.9 公里、26 分。官網公布跨年 DJ、MC、屋頂看煙火，套餐 2 人 2,800,000 越南盾起（年份官網未標）。細節見下方比較表。' },
       { n: 'Skyline Hanoi', tags: ['夜間'], nye: true, d: '11:00–23:00，午夜前關門。步行 1.8 公里、25 分。要在這裡倒數，得先問能不能延長營業。細節見下方比較表。' },
@@ -975,21 +975,27 @@
     box.appendChild(list);
     root.insertBefore(box, root.firstChild);
   });
+  // 備選不分類：每天一個「備選」區塊。分類若帶著提醒（note），提醒放在區塊開頭
+  var altBy = {}, altNote = {};
   pool.forEach(function (g) {
-    var byDay = {};
-    g.items.forEach(function (it) { (byDay[DAY[it.n] || 'und'] = byDay[DAY[it.n] || 'und'] || []).push(it); });
-    Object.keys(byDay).forEach(function (d) {
-      var root = document.getElementById('c-' + d);
-      if (!root) return;
-      var box = el('div', 'group');
-      var h3 = el('h3', '', '備選：' + g.name);
-      h3.appendChild(el('small', '', g.hint + ' · ' + byDay[d].length + ' 項'));
-      box.appendChild(h3);
-      var list = el('div', 'cands');
-      byDay[d].forEach(function (it) { list.appendChild(card(it)); });
-      box.appendChild(list);
-      root.appendChild(box);
+    g.items.forEach(function (it) {
+      var d = DAY[it.n] || 'und';
+      (altBy[d] = altBy[d] || []).push(it);
+      if (g.note) (altNote[d] = altNote[d] || []).indexOf(g.note) < 0 && altNote[d].push(g.note);
     });
+  });
+  Object.keys(altBy).forEach(function (d) {
+    var root = document.getElementById('c-' + d);
+    if (!root) return;
+    var box = el('div', 'group');
+    var h3 = el('h3', '', '備選');
+    h3.appendChild(el('small', '', '未決定 · ' + altBy[d].length + ' 項'));
+    box.appendChild(h3);
+    if (altNote[d]) box.appendChild(el('p', 'note', altNote[d].join('')));
+    var list = el('div', 'cands');
+    altBy[d].forEach(function (it) { list.appendChild(card(it)); });
+    box.appendChild(list);
+    root.appendChild(box);
   });
 
   // 酒吧比較表：窄螢幕改成卡片時，每格要知道自己的欄名
@@ -1013,7 +1019,7 @@
     ['文廟', 21.0276496, 105.8355176, 'sight', '半日 · 點在正門', ['d1'], ['文廟']],
     ['火爐監獄', 21.0254222, 105.8465093, 'sight', '半日', ['d1'], ['火爐監獄']],
     ['昇龍水上木偶戲院', 21.0316826, 105.8533466, 'sight', '夜間場', ['d5'], ['水上木偶戲']],
-    ['還劍湖', 21.0288313, 105.8525357, 'sight', '舊城區散步 · 12/31 跨年人潮', ['d1', 'd4'], ['還劍湖與舊城區散步']],
+    ['還劍湖', 21.0288313, 105.8525357, 'sight', '舊城區散步 · 12/31 跨年人潮', ['d1'], ['還劍湖與舊城區散步']],
     ['越南民族學博物館', 21.0403422, 105.7987354, 'sight', '8:30–17:30 · 距舊城區約 8 公里', ['d5'], ['越南民族學博物館']],
     ['西湖與鎮國寺', 21.0478837, 105.8368375, 'sight', '免費 · 距舊城區約 4 公里', ['d5'], ['西湖與鎮國寺']],
     ['Chả Cá Lã Vọng', 21.0356592, 105.8491688, 'food', 'Cha Ca 街 14 號', ['d1'], ['Chả Cá Lã Vọng']],
@@ -1023,15 +1029,34 @@
     ['陶瓷村（Bat Trang）', 20.9749029, 105.9118968, 'sight', '半日 · 在市區東南郊 · 點在陶瓷市場', ['d4'], ['陶瓷村（Bat Trang）']],
     ['樂天中心（Lotte Center）', 21.032199, 105.8123834, 'sight', '1/1 · 54 Liễu Giai · 觀景台 65 樓', ['d5'], ['樂天中心河內（Lotte Center）']],
     ['Vincom Center Metropolis', 21.0313057, 105.8147359, 'sight', '1/1 · 29 Liễu Giai · 離樂天中心步行 4 分', ['d5'], ['Vincom Center Metropolis']],
-    ['Tru by Hilton Hanoi Station', 21.02385, 105.84185, 'hotel', '住宿 · 115 Tran Hung Dao · 河內火車站正對面', ['d1', 'd4', 'd5', 'd6', 'stay'], []],
+    ['Tru by Hilton Hanoi Station', 21.02385, 105.84185, 'hotel', '住宿 · 115 Tran Hung Dao · 河內火車站正對面', ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'stay'], []],
     ['火車咖啡街（Phùng Hưng 段）', 21.0301529, 105.8440687, 'sight', '12/28 · Trần Phú 街平交道 · 另有 Lê Duẩn 段在火車站南邊', ['d1'], ['火車咖啡街']],
     ['三十六古街（Hàng Bạc 街）', 21.03393, 105.85215, 'sight', '12/28 · 住宿步行 26 分、1.9 公里', ['d1'], ['三十六古街']],
     ['龍邊市場', 21.0414363, 105.8509912, 'sight', '1/2 · 批發市場，夜間到清晨最熱鬧（時段未確認）', ['d6'], ['龍邊市場（Chợ Long Biên）']],
     ['同春市場', 21.0380961, 105.8494029, 'sight', '1/2 · 室內市場 · 到龍邊步行 7 分', ['d6'], ['同春市場（Chợ Đồng Xuân）']],
-    ['內排機場', 21.2171326, 105.7922087, 'air', '去程降落、回程起飛 · 點在 T2 國際航廈（假設走 T2，未確認）', ['d1', 'd6', 'stay'], []]
+    ['內排機場', 21.2171326, 105.7922087, 'air', '去程降落、回程起飛 · 點在 T2 國際航廈（假設走 T2，未確認）', ['d1', 'd6', 'stay'], []],
+    // 12/29、12/30：raw/hanoi-trip-2026-10/座標-下龍灣寧平-sub-agent回報-2026-10-15.md
+    // 第 8 欄是 Google 地圖搜尋字串；沒填就用「名稱 Hanoi」
+    ['Tuan Chau 國際碼頭', 20.92248, 106.99073, 'sight', '12/29 · 11:30 上船（官網寫 Tuan Chau Marina，泊位未寫）', ['d2'], ['下龍灣：Cozy Bay 套票（含接送）'], 'Tuan Chau International Marina Ha Long'],
+    ['長安坐船碼頭', 20.25313, 105.91886, 'sight', '12/30 · 點在碼頭售票處 · 跟三谷二選一', ['d3'], ['長安（Trang An）坐船'], 'Trang An boat tour Ninh Binh'],
+    ['三谷坐船碼頭', 20.21646, 105.93742, 'sight', '12/30 · 跟長安二選一', ['d3'], ['三谷（Tam Coc）坐船'], 'Ben thuyen Tam Coc Ninh Binh'],
+    ['華閭古都（丁先皇祠）', 20.28454, 105.90524, 'sight', '12/30', ['d3'], ['華閭（Hoa Lu）古都'], 'Den vua Dinh Tien Hoang Ninh Binh'],
+    ['碧洞寺', 20.21758, 105.91566, 'sight', '12/30 · 在三谷附近', ['d3'], ['碧洞寺（Bich Dong）'], 'Chua Bich Dong Ninh Binh'],
+    ['Mua 洞售票入口', 20.23096, 105.93763, 'sight', '12/30 · 點在售票入口（下車處），山洞與山頂在約 600 公尺外', ['d3'], ['Mua 洞觀景台'], 'Hang Mua Ninh Binh'],
+    ['白殿寺', 20.2758949, 105.8657707, 'sight', '12/30 · 寺院範圍大，這點是哪一棟未確認', ['d3'], ['白殿寺（Bai Dinh）'], 'Chua Bai Dinh Ninh Binh']
   ];
-  var PIN_LABEL = { sight: '景點', food: '餐廳', bar: '跨年酒吧', air: '機場', hotel: '住宿' };
-  var FAR = { d2: '這天在下龍灣，離市區太遠，地圖沒有標。', d3: '這天在寧平，離市區太遠，地圖沒有標。' };
+  var PIN_LABEL = { sure: '行程', alt: '備選', hotel: '住宿', air: '機場' };
+  var NOTE = {
+    d2: '座標在 2026/10/15 用 OpenStreetMap 與 Google 地圖核對，相差 18 公尺。碼頭離住宿遠，放大地圖才看得清碼頭周邊。',
+    d3: '座標在 2026/10/15 用 OpenStreetMap 與 Google 地圖核對，相差都在 80 公尺內。寧平離住宿約 95 公里，寧平的點靠得很近，放大地圖才分得開。Mua 洞標售票入口，山洞在約 600 公尺外。白殿寺範圍大，點是哪一棟未確認。'
+  };
+  // 這個點在這天算「行程」還是「備選」：它對應的卡片在當天的已決定行程裡就是行程。住宿、機場不分
+  // 回傳的值就是標記的 class：sure、alt、hotel、air
+  function status(p, d) {
+    if (p[3] === 'hotel' || p[3] === 'air') return p[3];
+    var names = (sureBy[d] || []).map(function (it) { return it.n; });
+    return p[6].some(function (n) { return names.indexOf(n) >= 0; }) ? 'sure' : 'alt';
+  }
 
   // 每天的地圖區塊放在「摘要」後面；地圖本身等那天第一次顯示時才建立
   var maps = {};
@@ -1045,14 +1070,13 @@
   }
   ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'stay'].forEach(function (d) {
     var box = mapSlot(d);
-    if (FAR[d]) { box.appendChild(el('p', 'note', FAR[d])); return; }
     var mine = places.filter(function (p) { return p[5].indexOf(d) >= 0; });
     var legend = el('div', 'legend');
     legend.setAttribute('aria-label', '地圖圖例');
     Object.keys(PIN_LABEL).forEach(function (k) {
-      if (!mine.some(function (p) { return p[3] === k; })) return;
-      var s = el('span'); var i = el('i', 'sw pin ' + k); i.style.width = '14px';
-      s.appendChild(i); s.appendChild(document.createTextNode(PIN_LABEL[k]));
+      if (!mine.some(function (p) { return status(p, d) === k; })) return;
+      var s = el('span');
+      s.appendChild(el('i', 'pin ' + k)); s.appendChild(document.createTextNode(PIN_LABEL[k]));
       legend.appendChild(s);
     });
     box.appendChild(legend);
@@ -1061,10 +1085,10 @@
     mb.appendChild(m); box.appendChild(mb);
     var covered = [].concat.apply([], mine.map(function (p) { return p[6]; }));
     var missing = (sureBy[d] || []).map(function (it) { return it.n; }).filter(function (n) { return covered.indexOf(n) < 0; });
-    var note = '座標在 2026/10/15 用 OpenStreetMap 與 Google 地圖或維基百科核對過，兩個來源相差都在 70 公尺內。內排機場標在 T2 國際航廈，航班用哪座航廈未確認。';
+    var note = NOTE[d] || '座標在 2026/10/15 用 OpenStreetMap 與 Google 地圖或維基百科核對過，兩個來源相差都在 70 公尺內。內排機場標在 T2 國際航廈，航班用哪座航廈未確認。';
     if (missing.length) note += '這天的行程裡，' + missing.join('、') + '還沒有座標，地圖沒有標。';
     box.appendChild(el('p', 'note', note));
-    maps[d] = { node: m, places: mine };
+    maps[d] = { node: m, places: mine, day: d };
   });
 
   function drawMap(d) {
@@ -1078,15 +1102,17 @@
     }).addTo(map);
     var pts = [];
     rec.places.forEach(function (p) {
-      var icon = L.divIcon({ className: '', html: '<div class="pin ' + p[3] + '"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
-      var mk = L.marker([p[1], p[2]], { icon: icon, title: p[0] }).addTo(map);
+      var st = status(p, rec.day);
+      var icon = L.divIcon({ className: '', html: '<div class="pin ' + st + '"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
+      var mk = L.marker([p[1], p[2]], { icon: icon, title: p[0], zIndexOffset: st === 'alt' ? 0 : 500 }).addTo(map);
       var box = document.createElement('div');
       box.appendChild(el('b', '', p[0]));
+      if (st === 'sure' || st === 'alt') box.appendChild(el('span', '', '　' + PIN_LABEL[st]));
       box.appendChild(document.createElement('br'));
       box.appendChild(document.createTextNode(p[4]));
       box.appendChild(document.createElement('br'));
       var a = el('a', '', '在 Google 地圖開啟');
-      a.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(p[0].replace(/（.*/, '') + ' Hanoi');
+      a.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(p[7] || p[0].replace(/（.*/, '') + ' Hanoi');
       a.target = '_blank'; a.rel = 'noopener';
       box.appendChild(a);
       mk.bindPopup(box);
@@ -1095,7 +1121,7 @@
     // 機場離市區約 20 公里，不算進取景範圍；只有機場時才用它取景
     if (!pts.length) pts = rec.places.map(function (p) { return [p[1], p[2]]; });
     if (pts.length > 1) map.fitBounds(pts, { padding: [28, 28], maxZoom: 16 });
-    else map.setView(pts[0], 15);
+    else map.setView(pts[0], 13);
   }
 
   // 一次只顯示一個畫面：總覽、某一天、未排日期或住宿
