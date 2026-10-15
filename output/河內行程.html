@@ -303,9 +303,9 @@
 
   <section id="d5" class="day" aria-labelledby="h-d5">
     <h2 id="h-d5">1/1 <small>Day 5 · 週五</small></h2>
-    <div class="group"><h3>摘要</h3><div class="cands"><article class="cand sum"><ul><li>樂天中心河內（你指定。細節見下方「行程」卡片）</li><li>前一晚熬夜，別排太早或太累的行程</li></ul></article></div></div>
+    <div class="group"><h3>摘要</h3><div class="cands"><article class="cand sum"><ul><li>樂天中心河內（你指定。細節見下方「行程」卡片）</li><li>對面的 Vincom Center Metropolis 商場，步行 4 分（你要求加入附近商場）</li><li>前一晚熬夜，別排太早或太累的行程</li></ul></article></div></div>
     <div id="c-d5" class="daycands"></div>
-    <div class="group"><h3>議題<small>4 項</small></h3><div class="cands"><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>樂天中心之外，1/1 還要不要加別的（備選見下：民族學博物館、西湖、水上木偶戲）</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>觀景台假日票價（營業已由使用者確認）</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>住宿到樂天中心的車程與 Grab 費用（Google 地圖沒查到）</p></article><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>白天看景或傍晚看夕陽，要不要訂 Top of Hanoi</p></article></div></div>
+    <div class="group"><h3>議題<small>4 項</small></h3><div class="cands"><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>樂天中心與 Vincom 之外，1/1 還要不要加別的（備選見下：民族學博物館、西湖、水上木偶戲、Lotte Mall West Lake）</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>觀景台假日票價（營業已由使用者確認）</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>住宿到樂天中心的車程與 Grab 費用（Google 地圖沒查到）</p></article><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>白天看景或傍晚看夕陽，要不要訂 Top of Hanoi</p></article></div></div>
   </section>
 
   <section id="d6" class="day" aria-labelledby="h-d6">
@@ -397,7 +397,8 @@
       { n: 'Chả Cá Lã Vọng', tags: ['用餐'], d: '鬱金香煎魚。Cha Ca 街 14 號，約 350,000 越南盾每人。11–14、17–21 時。12/31 要不要訂位未確認，建議先電話 +84 4 3825 3929。', was: '原 12/31 晚餐候選，改列 12/28' },
       { n: 'Bún chả Đắc Kim', tags: ['用餐'], d: 'Hàng Mành 街 1 號，約 40,000–60,000 越南盾。營業時間各來源不一致，肉賣完會提早收。', was: '原 12/31 晚餐候選，改列 12/28' },
       { n: '蛋咖啡', nomap: true, tags: ['用餐'], d: '舊城區的咖啡店。', was: '原草案 1/2 上午，改列 12/28' },
-      { n: '舊城區買伴手禮', nomap: true, tags: ['半日'], d: '咖啡和茶。', was: '原草案 1/2 上午，改列 12/28' }
+      { n: '舊城區買伴手禮', nomap: true, tags: ['半日'], d: '咖啡和茶。', was: '原草案 1/2 上午，改列 12/28' },
+      { n: 'Lotte Mall West Lake', q: 'Lotte Mall West Lake Hanoi', tags: ['半日'], d: '272 Võ Chí Công，西湖西北側的大型商場。從樂天中心開車 22 分、5.7 公里（Google 地圖，2026-10-15 查，當下比平常塞），不算步行可到。Google 地圖顯示 22:00 打烊，1/1 是否照常未確認。', was: '你要求加入樂天中心附近商場；因為要搭車，先列備選' }
     ]}
   ];
 
@@ -406,7 +407,7 @@
     '水上木偶戲': 'd5', '文廟': 'd1', '火爐監獄': 'd1', 'Chả Cá Lã Vọng': 'd1', 'Bún chả Đắc Kim': 'd1', '蛋咖啡': 'd1', '舊城區買伴手禮': 'd1',
     '寧平': 'd3', '長安（Trang An）坐船': 'd3', '三谷（Tam Coc）坐船': 'd3', 'Mua 洞觀景台': 'd3', '華閭（Hoa Lu）古都': 'd3', '白殿寺（Bai Dinh）': 'd3', '碧洞寺（Bich Dong）': 'd3',
     '胡志明陵區': 'd4',
-    '越南民族學博物館': 'd5', '西湖與鎮國寺': 'd5', '還劍湖周邊': 'd4', '高樓酒吧': 'd4', '飯店跨年晚宴': 'd4'
+    '越南民族學博物館': 'd5', '西湖與鎮國寺': 'd5', 'Lotte Mall West Lake': 'd5', '還劍湖周邊': 'd4', '高樓酒吧': 'd4', '飯店跨年晚宴': 'd4'
   };  // anything not listed goes to 'und' (not yet assigned)
 
   function pct(h) { return (h - START) / SPAN * 100; }
@@ -466,7 +467,8 @@
     '陶瓷村（Bat Trang）': ['約 2–3 小時', '估'],
     '越南民族學博物館': ['約 2–3 小時', '估'],
     '西湖與鎮國寺': ['約 2–3 小時', '估'],
-    '樂天中心河內（Lotte Center）': ['觀景台約 1–1.5 小時，不含用餐', '估']
+    '樂天中心河內（Lotte Center）': ['觀景台約 1–1.5 小時，不含用餐', '估'],
+    'Vincom Center Metropolis': ['約 1–2 小時', '估']
   };
 
   // 營業時間。lv = 來源強度：官網（已核對）／二手報導／第三方／未確認。sub-agent 查，細節見 raw/hanoi-trip-2026-10/營業時間核對-sub-agent回報-2026-10-14.md
@@ -773,7 +775,9 @@
     { a: '火車咖啡街', b: '三十六古街', walk: '34 分 · 2.5 公里', car: '17 分 · 3.8 公里',
       note: '2026-10-14 查。起點是 Google 解析的火車街入口 Ngõ 224 Lê Duẩn，終點是 Hàng Bạc 街的一個點。開車含即時路況，跨年與假日會更久。兩處哪個先去還沒決定，這段不分方向。' },
     { a: '龍邊市場（Chợ Long Biên）', b: '同春市場（Chợ Đồng Xuân）', walk: '7 分 · 500 公尺', car: '5 分 · 1.1 公里',
-      note: '2026-10-14 查，Google 地圖，從同春出發，開車用查詢當下的路況。兩處哪個先去還沒決定，這段不分方向。' }
+      note: '2026-10-14 查，Google 地圖，從同春出發，開車用查詢當下的路況。兩處哪個先去還沒決定，這段不分方向。' },
+    { a: '樂天中心河內（Lotte Center）', b: 'Vincom Center Metropolis', walk: '4 分 · 300 公尺', car: '未查',
+      note: '2026-10-15 查，Google 地圖，從樂天中心（LOTTE Mart）出發，途經 Liễu Giai 街。兩處先後順序還沒決定，這段不分方向。' }
   ];
   function leg(x, y) {
     var f = LEGS.filter(function (l) { return (l.a === x.n && l.b === y.n) || (l.a === y.n && l.b === x.n); })[0];
@@ -880,6 +884,20 @@
     "qfull": false
   },
   {
+    "day": "d5",
+    "n": "Vincom Center Metropolis",
+    "tags": ["半日", "已決定"],
+    "lines": [
+      "你要求加入樂天中心附近的商場。地址：29 Liễu Giai，在樂天中心斜對面。",
+      "從樂天中心走過去：4 分、300 公尺（Google 地圖，2026-10-15 查）。",
+      "Google 地圖顯示查詢當天 22:00 打烊。開門時間與 1/1 是否照常：未確認。",
+      "館內有 MUJI（Google 地圖列出）。其他店家與美食街：未查。",
+      "跟樂天中心的先後順序未決。順路的做法（我的安排，非來源）：觀景台看完夕陽前後走過來逛。"
+    ],
+    "q": "Vincom Center Metropolis",
+    "qfull": false
+  },
+  {
     "day": "d6",
     "n": "龍邊市場（Chợ Long Biên）",
     "tags": ["半日", "已決定"],
@@ -959,6 +977,8 @@
       ['Moonlight Sky Bar', 21.0344, 105.8510, 'bar', '馬梅街 94 號 11 樓'],
       ['Diamond Sky Bar', 21.0348, 105.8532, 'bar', 'Ta Hien 街 22 號'],
       ['陶瓷村（Bat Trang）', 20.9758, 105.9141, 'sight', '半日 · 在市區東南郊'],
+      ['樂天中心（Lotte Center）', 21.032199, 105.8123834, 'sight', '1/1 · 54 Liễu Giai · 觀景台 65 樓'],
+      ['Vincom Center Metropolis', 21.0313057, 105.8147359, 'sight', '1/1 · 29 Liễu Giai · 離樂天中心步行 4 分'],
       ['Tru by Hilton Hanoi Station', 21.02385, 105.84185, 'hotel', '住宿 · 115 Tran Hung Dao · 河內火車站正對面'],
       ['內排機場', 21.2212, 105.8072, 'air', '去程降落、回程起飛']
     ];

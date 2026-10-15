@@ -153,3 +153,8 @@ append-only。只准往下加，不准改舊的。格式見 [CLAUDE.md](CLAUDE.m
 - 動了 `output/河內行程.html`：該項從備選移到 12/28 的已決定行程卡；12/28 摘要加上這一項
 - 卡片內容只用頁面既有資料：住宿到還劍湖 2.1 公里、步行 29 分（Google 地圖，同檔既有）；玉山祠時間為單一部落格來源。湖的開放時間未確認
 - 與火車咖啡街、三十六古街的先後順序未決，卡片之間交通時間顯示「未查」
+
+## [2026-10-15] write | 1/1 加入樂天中心附近的商場
+- 新增 `raw/hanoi-trip-2026-10/google-maps-樂天中心附近商場-2026-10-15.md`；動了 `output/河內行程.html`：1/1 新增「行程」卡 Vincom Center Metropolis，加樂天中心↔Vincom 步行列（4 分、300 公尺）、摘要一行、地圖兩個點（樂天中心、Vincom，座標取自 Google 地圖網址）；Lotte Mall West Lake 列入 1/1 備選
+- Google 地圖搜尋樂天中心附近商場，只有 Vincom Metropolis 在步行範圍；Lotte Mall West Lake 開車 22 分、5.7 公里，所以只列備選，沒排進行程。備份在 scratchpad
+- 待辦：Vincom 開門時間與 1/1 營業未確認；兩處先後順序未決；要不要把 West Lake 排進行程待使用者決定
