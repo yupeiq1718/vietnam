@@ -1,0 +1,9 @@
+.DS_Store
+**/.DS_Store
+.claude/settings.local.json
+
+# Obsidian 的本機設定（主題、面板位置、插件狀態）
+.obsidian/
+
+# Playwright MCP 的暫存紀錄（console log、頁面快照）
+.playwright-mcp/

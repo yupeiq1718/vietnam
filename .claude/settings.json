@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit",
+      "Edit(.claude/skills/**)",
+      "Write",
+      "Write(.claude/skills/**)",
+      "Bash",
+      "WebSearch",
+      "WebFetch(domain:*)",
+      "Skill",
+      "Agent",
+      "Monitor",
+      "mcp__playwright"
+    ]
+  }
+}

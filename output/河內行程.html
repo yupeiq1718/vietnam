@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>河內六日行程</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+  /* Layout: confirmed flights on a 07:00-24:00 day grid, then a candidate pool grouped by kind, then open questions. */
+  :root {
+    --bg: #edf1ef;
+    --surface: #fafbfa;
+    --ink: #14262b;
+    --muted: #55696e;
+    --line: #cbd6d3;
+    --accent: #1d6a73;
+    --accent-soft: #d3e8e9;
+    --warn: #9a5a0a;
+    --warn-soft: #f6e4c8;
+    --night: #2b3a67;
+    --night-soft: #d9def0;
+    --font-display: "Noto Serif TC", "Songti TC", serif;
+    --font-body: "Noto Sans TC", "PingFang TC", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1a1d; --surface: #172428; --ink: #e4eeee; --muted: #93a8ac; --line: #2b3e43;
+      --accent: #5fb7bf; --accent-soft: #1d3a3e; --warn: #e0a24f; --warn-soft: #3a2e18;
+      --night: #9fb0f0; --night-soft: #232b4a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1a1d; --surface: #172428; --ink: #e4eeee; --muted: #93a8ac; --line: #2b3e43;
+    --accent: #5fb7bf; --accent-soft: #1d3a3e; --warn: #e0a24f; --warn-soft: #3a2e18;
+    --night: #9fb0f0; --night-soft: #232b4a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.7;
+    padding-block: 32px 56px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 40px; }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.3; }
+  h1 { font-size: clamp(28px, 5vw, 40px); }
+  h2 { font-size: 22px; }
+  h3 { font-size: 17px; }
+  p { margin: 0; }
+
+  .head { display: grid; gap: 16px; }
+  .range { color: var(--muted); font-size: 16px; font-family: var(--font-mono); }
+  .facts { display: flex; flex-wrap: wrap; gap: 12px; }
+  .fact { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; min-width: 0; }
+  .fact .lab { font-size: 12px; letter-spacing: 0.08em; color: var(--muted); }
+  .fact .val { font-family: var(--font-mono); font-size: 16px; font-weight: 500; }
+  .note { color: var(--muted); font-size: 13px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); margin: 12px 0 10px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 22px; height: 14px; border-radius: 3px; display: inline-block; }
+
+  .gridbox { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+  .grid { min-width: 880px; padding: 14px 16px 16px; }
+  .axis, .row { display: grid; grid-template-columns: 76px 1fr; column-gap: 10px; }
+  .axis { margin-bottom: 4px; }
+  .ticks { position: relative; height: 18px; }
+  .ticks span { position: absolute; top: 0; transform: translateX(-50%); font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  .ticks span.last { transform: translateX(-100%); }
+  .row { border-top: 1px solid var(--line); }
+  .rowlabel { padding-top: 8px; line-height: 1.3; }
+  .rowlabel b { font-family: var(--font-mono); font-size: 14px; display: block; }
+  .rowlabel small { color: var(--muted); font-size: 12px; }
+  .track {
+    position: relative;
+    height: 44px;
+    background-image: linear-gradient(to right, var(--line) 1px, transparent 1px);
+    background-size: calc(100% / 17) 100%;
+    border-right: 1px solid var(--line);
+  }
+  .track .empty { position: absolute; inset: 0; display: flex; align-items: center; padding-left: 12px; font-size: 12px; color: var(--muted); }
+  .blk {
+    position: absolute; top: 6px; height: 32px;
+    background: var(--ink); color: var(--surface); border-radius: 4px;
+    font-size: 12px; font-weight: 500; padding: 4px 8px;
+    display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .blk.plan { background: var(--accent-soft); color: var(--ink); border: 1.5px dashed var(--accent); }
+  .scrollhint { display: none; font-size: 12px; color: var(--muted); }
+  @media (max-width: 760px) { .scrollhint { display: block; } }
+
+
+  .mapbox { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+  #map { height: 480px; width: 100%; }
+  @media (max-width: 760px) { #map { height: 380px; } }
+  .pin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.45); }
+  .pin.sight { background: #1d6a73; }
+  .pin.food { background: #c0561a; }
+  .pin.bar { background: #2b3a67; }
+  .pin.air { background: #14262b; border-radius: 3px; }
+  .pin.hotel { background: #b3261e; border-radius: 3px; }
+  .leaflet-popup-content { font-family: var(--font-body); font-size: 13px; line-height: 1.5; margin: 10px 12px; color: #14262b; }
+  .leaflet-popup-content b { font-size: 14px; }
+
+  .tabs { position: sticky; top: 0; z-index: 1000; display: flex; gap: 8px; padding: 8px 0; background: var(--bg); }
+  .tabs a { padding: 4px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); text-decoration: none; font-size: 14px; }
+  .tabs a:hover { border-color: var(--accent); color: var(--accent); }
+  html { scroll-behavior: smooth; }
+  section[id] { scroll-margin-top: 56px; }
+  section > h2 { margin-bottom: 12px; }
+  .limits-list { margin: 12px 0 0; padding-left: 1.2em; color: var(--muted); font-size: 14px; }
+
+  .fold { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0 18px; min-width: 0; align-self: start; }
+  .fold > summary { display: flex; align-items: baseline; gap: 10px; padding: 14px 0; cursor: pointer; list-style: none; }
+  .fold > summary::-webkit-details-marker { display: none; }
+  .fold > summary::before { content: "▸"; color: var(--muted); display: inline-block; transition: transform .15s; }
+  .fold[open] > summary::before { transform: rotate(90deg); }
+  .fold > summary small { color: var(--muted); font-size: 13px; }
+  .fold > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .fold > ul { margin: 0 0 16px; padding-left: 1.2em; display: grid; gap: 6px; }
+  .fold > :not(summary):last-child { margin-bottom: 16px; }
+  .fold > .tablewrap { margin-bottom: 12px; }
+  @media (prefers-reduced-motion: reduce) { .fold > summary::before { transition: none; } }
+
+  .limits { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; display: grid; gap: 8px; }
+  .limits ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+
+  .pool { display: grid; gap: 28px; }
+  .pool > p { color: var(--muted); }
+  .group { display: grid; gap: 12px; }
+  .group h3 small { font-family: var(--font-body); font-size: 13px; color: var(--muted); font-weight: 400; margin-left: 8px; }
+  .cands { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .cand {
+    background: var(--surface);
+    border: 1.5px dashed var(--warn);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: grid; gap: 8px; align-content: start; min-width: 0;
+  }
+  .cand.night { border-color: var(--night); }
+  .cand h4 { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.4; }
+  .cand p { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 12px; padding: 0 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .tag.dur { border-color: var(--accent); color: var(--accent); }
+  .tag.was { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+  .tag.nye { background: var(--night-soft); border-color: var(--night); color: var(--night); }
+
+  .tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 14px; }
+  table.wide { min-width: 1660px; font-size: 13px; }
+  table.wide td:first-child, table.wide th:first-child { position: sticky; left: 0; background: var(--surface); z-index: 1; min-width: 130px; white-space: normal; }
+  table.wide td { min-width: 120px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; }
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { font-weight: 500; white-space: nowrap; }
+
+  .twocol { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .panel ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+  .tabs { overflow-x: auto; white-space: nowrap; }
+  .tabs a { flex: none; }
+  .day { display: grid; gap: 16px; align-content: start; }
+  .day > h2 small { font-family: var(--font-body); font-size: 13px; color: var(--muted); font-weight: 400; margin-left: 8px; }
+  .conf { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--ink); border-radius: 8px; padding: 14px 18px; display: grid; gap: 8px; }
+  .conf ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+  .daycands { display: grid; gap: 20px; }
+  .daycands:empty { display: none; }
+  .rowlabel a { color: inherit; text-decoration: none; }
+
+  .cand.sure { border: 1.5px solid var(--accent); }
+  .tag.sure { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+  .cand.sum { border: 1.5px solid var(--ink); }
+  .cand.sum ul { margin: 0; padding-left: 1.2em; display: grid; gap: 2px; font-size: 13.5px; }
+  .cand.issue { border-style: solid; border-color: var(--line); }
+  .more { font-size: 13px; }
+  .more summary { cursor: pointer; color: var(--accent); width: fit-content; }
+  .more summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .more > p, .more > ul { margin-top: 6px; }
+  .more ul { margin-bottom: 0; padding-left: 1.2em; display: grid; gap: 2px; }
+
+  .cands.seq { grid-template-columns: 1fr; max-width: 720px; gap: 8px; }
+  .leg { margin-left: 18px; padding: 6px 14px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; font-size: 13px; color: var(--ink); }
+  .leg .legline { font-family: var(--font-mono); font-size: 12.5px; }
+  .tag.time { border-color: var(--ink); color: var(--ink); font-family: var(--font-mono); font-size: 11.5px; }
+
+  .cand p.hours { border-top: 1px dashed var(--line); padding-top: 6px; color: var(--ink); font-size: 13px; }
+  .hours .lv { font-size: 12px; margin-left: 4px; }
+  .hours .lv-official { color: var(--accent); font-weight: 700; }
+  .hours .lv-third { color: var(--muted); }
+  .hours .lv-unk { color: var(--warn); }
+
+  .foot { display: grid; gap: 8px; font-size: 13px; color: var(--muted); }
+  .foot ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+  .cand a, td a { color: var(--accent); overflow-wrap: anywhere; }
+  .foot a { color: var(--accent); overflow-wrap: anywhere; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <h1>河內六天五夜</h1>
+    <p class="range">2026/12/28（一）– 2027/1/2（六）</p>
+    <p class="note">草稿。大方向：12/28 與 12/31 在住宿附近、12/29 下龍灣、12/30 寧平、12/31 晚上跨年；1/1、1/2 還沒定。景點資訊多半來自記憶，沒核對過來源。⏱ 是預計花費時間，標「估」的是我憑一般經驗估的，不是來源說的。</p>
+    <nav class="tabs" aria-label="章節">
+      <a href="#s-plan">總覽</a>
+      <a href="#s-map">地圖</a>
+      <a href="#d1">12/28</a>
+      <a href="#d2">12/29</a>
+      <a href="#d3">12/30</a>
+      <a href="#d4">12/31</a>
+      <a href="#d5">1/1</a>
+      <a href="#d6">1/2</a>
+      <a href="#und">未排日期</a>
+      <a href="#stay">住宿</a>
+    </nav>
+  </header>
+
+  <section id="s-plan" aria-labelledby="g">
+    <h2 id="g">總覽</h2>
+    <div class="facts">
+      <div class="fact"><div class="lab">去程（已訂）</div><div class="val">09:15 → 11:35</div></div>
+      <div class="fact"><div class="lab">回程（已訂）</div><div class="val">18:20 → 21:55</div></div>
+      <div class="fact"><div class="lab">住宿（已訂）</div><div class="val" style="font-size:14px">Tru by Hilton Hanoi Station</div></div>
+    </div>
+    <p class="scrollhint">表格可以左右滑動。</p>
+    <div class="gridbox"><div class="grid" id="grid"></div></div>
+  </section>
+
+  <section id="s-map" aria-labelledby="m">
+    <h2 id="m">地圖</h2>
+    <div class="legend" aria-label="地圖圖例">
+      <span><i class="sw pin sight" style="width:14px"></i>景點</span>
+      <span><i class="sw pin food" style="width:14px"></i>餐廳</span>
+      <span><i class="sw pin bar" style="width:14px"></i>跨年酒吧</span>
+      <span><i class="sw pin air" style="width:14px"></i>機場</span>
+      <span><i class="sw pin hotel" style="width:14px"></i>住宿</span>
+    </div>
+    <div class="mapbox"><div id="map" role="application" aria-label="河內景點地圖"></div></div>
+    <p class="note">座標是估的。點標記，用彈窗連結在 Google 地圖核對。寧平、下龍灣太遠，沒有標。住宿的座標來自 OpenStreetMap。</p>
+  </section>
+
+  <section id="d1" class="day" aria-labelledby="h-d1">
+    <h2 id="h-d1">12/28 <small>Day 1 · 週一</small></h2>
+    <div class="group"><h3>摘要</h3><div class="cands"><article class="cand sum"><ul><li>去程 09:15 → 11:35（已訂）</li><li>降落後約 14:00 才能開始市區活動（推算）</li></ul><details class="more"><summary>更多（2）</summary><ul><li>飯店 15:00 入住。先寄放行李再出門</li><li>下午到晚上：火車咖啡街、三十六古街、還劍湖與舊城區散步（你指定。細節見下方「行程」卡片）</li></ul></details></article></div></div>
+    <div id="c-d1" class="daycands"></div>
+    <div class="group"><h3>議題<small>3 項</small></h3><div class="cands"><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>飯店能不能早到入住</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>火車咖啡街現在能不能進去、咖啡店營業時間、12/28 的火車時刻</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>三十六古街與火車咖啡街哪個先去</p></article></div></div>
+  </section>
+
+  <section id="d2" class="day" aria-labelledby="h-d2">
+    <h2 id="h-d2">12/29 <small>Day 2 · 週二</small></h2>
+    <div class="group"><h3>摘要</h3><div class="cands"><article class="cand sum"><ul><li>全天：下龍灣，Cozy Bay 套票（含接送，你決定不包車。細節見下方「行程」卡片）</li></ul></article></div></div>
+    <div id="c-d2" class="daycands"></div>
+    <div class="group"><h3>議題<small>1 項</small></h3><div class="cands"><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>Cozy Bay 套票</p><details class="more"><summary>更多</summary><p>12/29 是否開船、飯店（115 Trần Hưng Đạo）是否在 07:00 接送範圍、天候取消是退款還是改期（書面）、實際船名與載客人數、4 人的最終價格</p></details></article></div></div>
+  </section>
+
+  <section id="d3" class="day" aria-labelledby="h-d3">
+    <h2 id="h-d3">12/30 <small>Day 3 · 週三</small></h2>
+    <div class="group"><h3>摘要</h3><div class="cands"><article class="cand sum"><ul><li>全天：寧平一日遊，包車往返（你指定。價格與出發時間還在查）</li><li>當天只排寧平，不加木偶戲（你決定）</li></ul></article></div></div>
+    <div id="c-d3" class="daycands"></div>
+    <div class="group"><h3>議題<small>1 項</small></h3><div class="cands"><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>包車</p><details class="more"><summary>更多</summary><p>車型、價格、司機等候與加班規則、過路費與停車費誰付、天候取消費；長安船票是否另計</p></details></article></div></div>
+  </section>
+
+  <section id="d4" class="day" aria-labelledby="h-d4">
+    <h2 id="h-d4">12/31 <small>Day 4 · 週四</small></h2>
+    <div class="group"><h3>摘要</h3><div class="cands"><article class="cand sum"><ul><li>白天：陶瓷村（你指定。細節見下方「行程」卡片）；晚上跨年</li><li>要熬夜，白天別排太累</li></ul></article></div></div>
+    <div id="c-d4" class="daycands"></div>
+    <div class="group"><h3>議題<small>3 項</small></h3><div class="cands"><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>怎麼跨年，去哪家酒吧（見下表）</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>還劍湖倒數與煙火的地點</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>酒吧 12/31 是否營業、要不要訂位（見下表）</p></article></div></div>
+    <details class="fold">
+      <summary><h3>跨年酒吧選哪家</h3><small>6 家 · 全部未決</small></summary>
+      <p class="scrollhint" style="display:block">表格可以左右滑動。</p>
+      <div class="tablewrap">
+        <table class="wide">
+          <thead><tr><th>酒吧</th><th>營業時間</th><th>離住宿</th><th>景觀</th><th>價位</th><th>服裝</th><th>2026 跨年</th><th>訂位</th><th>評價</th><th>備註</th></tr></thead>
+          <tbody>
+            <tr><td>Moonlight Sky Bar<br><a href="https://www.google.com/maps/search/?api=1&query=Moonlight%20Sky%20Bar%20Hanoi" target="_blank" rel="noopener">Google 地圖</a></td><td>17:00–24:00（官網）</td><td>步行 2.0 公里，28 分</td><td>360 度：還劍湖、紅河、舊城區</td><td>最低消費官網未提。另一來源寫每人約 150,000–500,000 越南盾（日期不明）</td><td>smart casual，另一來源說不穿拖鞋與無袖</td><td>官網沒有活動或套餐</td><td><a href="https://skybars.vn/" target="_blank" rel="noopener">官網表單</a>、電話 +84 24 3926 3641、moonlight@skybars.vn</td><td>未查</td><td>馬梅街 94 號 11 樓，步行到湖約 12 分鐘</td></tr>
+            <tr><td>Diamond Sky Bar<br><a href="https://www.google.com/maps/search/?api=1&query=Diamond%20Sky%20Bar%20Hanoi" target="_blank" rel="noopener">Google 地圖</a></td><td>16:00–24:00</td><td>步行 1.9 公里，26 分</td><td>還劍湖與紅河橋。屋頂看煙火，方向未說明</td><td>招牌調酒 275,000–325,000（幣別官網未標）。16:30–19:00 部分飲品 75 折</td><td>未確認</td><td><b>官網已公布：</b>DJ、MC、魔術秀、屋頂看煙火。套餐 2 人 2,800,000 到 8–10 人 15,000,000 越南盾（年份官網未標）。先前看到的倒數派對文章是 2023 年</td><td>電話 +84 985 682 220</td><td>Google 4.9（796）<br>Tripadvisor 5.0（1,104）</td><td>樓層與飯店名稱各來源不一致。評論提到燈光暗、餐點偏貴</td></tr>
+            <tr><td>Skyline Hanoi<br><a href="https://www.google.com/maps/search/?api=1&query=Skyline%20Hanoi%20Hanoi" target="_blank" rel="noopener">Google 地圖</a></td><td>11:00–23:00，<b>午夜前關門</b></td><td>步行 1.8 公里，25 分</td><td>還劍湖、長鞭橋、天際線，部分視野受阻</td><td>未確認</td><td>casual 或 smart casual，來源不一</td><td>無資料</td><td>電話 +84 968 083 066、info@skylinehanoi.com</td><td>Google 4.8（1,728）<br>Tripadvisor 5.0（605）</td><td>Hanoi Tirant 飯店 11 樓。要在那裡倒數，得先問能不能延長</td></tr>
+            <tr><td>Terraço Sky Bar<br><a href="https://www.google.com/maps/search/?api=1&query=Terra%C3%A7o%20Sky%20Bar%20Hanoi" target="_blank" rel="noopener">Google 地圖</a></td><td>17:00–24:00（官網，他處略有出入）</td><td>步行 2.0 公里，27 分</td><td>360 度：還劍湖、玉山祠、龜塔。煙火方向未確認</td><td>啤酒塔加拼盤 1,899,000（4–6 人，2026/10 促銷）。17–19 時 7 折。單價未確認</td><td>smart casual</td><td>未確認</td><td>電話 +84 969 085 788</td><td>未確認</td><td>Hàng Dầu 33–35 號 8 樓。與 Majesty 是兩間不同的酒吧</td></tr>
+            <tr><td>Majesty Sky Bar<br><a href="https://www.google.com/maps/search/?api=1&query=Majesty%20Sky%20Bar%20Hanoi" target="_blank" rel="noopener">Google 地圖</a></td><td>17:00–24:00（另一來源寫 23:30）</td><td>步行 1.8 公里，25 分</td><td>還劍湖與舊城區，日落受好評</td><td>啤酒塔 1,899,000。香檳整瓶 1,800,000（2026/10 促銷）。17–19 時 7 折</td><td>未確認</td><td>未確認</td><td>電話 +84 969 321 069。<a href="https://www.facebook.com/MajestySkyBar" target="_blank" rel="noopener">Facebook</a>（網址來自旅遊文章，我沒開啟，未確認）</td><td>Google 4.7（90）<br>Tripadvisor 5.0（463）</td><td>Cầu Gỗ 1 號 8 樓。評論提到偏貴</td></tr>
+            <tr><td>La Nueva 飯店屋頂（Estrella）<br><a href="https://www.google.com/maps/search/?api=1&query=La%20Nueva%20Hotel%20Estrella%20rooftop%20Hanoi" target="_blank" rel="noopener">Google 地圖</a></td><td>18:00–23:59</td><td>步行 2.0 公里，28 分</td><td>日落景觀。看不看得到湖未確認</td><td>未確認</td><td>未確認</td><td>未確認。2020 年有香檳跨年套餐的評論</td><td>飯店電話 +84-24-32016911</td><td>酒吧本身未確認</td><td><b>風險：</b>2026/2 有評論稱整修中，現在是否重開未確認。資料最少</td></tr>
+            </tbody>
+        </table>
+      </div>
+      <p class="note">資料來自 sub-agent 的網路查證，多半是官網或旅遊網站摘要。評價來自 Wanderlog 等轉載，時間點未確認，近兩年評論沒有逐則核對。「未確認」代表查不到，不是沒有。從住宿步行超過 30 分鐘的 Top of Hanoi（51 分）和 Summit Bar（44 分）已刪除。「離住宿」是 2026-10-14 在 Google 地圖查的步行時間，原始紀錄在 raw/hanoi-trip-2026-10/。跨年夜封路與人潮會讓時間更長。訂位前請打電話確認。</p>
+    </details>
+
+  </section>
+
+  <section id="d5" class="day" aria-labelledby="h-d5">
+    <h2 id="h-d5">1/1 <small>Day 5 · 週五</small></h2>
+    <div class="group"><h3>摘要</h3><div class="cands"><article class="cand sum"><ul><li>樂天中心河內（你指定。細節見下方「行程」卡片）</li><li>前一晚熬夜，別排太早或太累的行程</li></ul></article></div></div>
+    <div id="c-d5" class="daycands"></div>
+    <div class="group"><h3>議題<small>4 項</small></h3><div class="cands"><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>樂天中心之外，1/1 還要不要加別的（備選見下：民族學博物館、西湖、水上木偶戲）</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>觀景台假日票價（營業已由使用者確認）</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>住宿到樂天中心的車程與 Grab 費用（Google 地圖沒查到）</p></article><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>白天看景或傍晚看夕陽，要不要訂 Top of Hanoi</p></article></div></div>
+  </section>
+
+  <section id="d6" class="day" aria-labelledby="h-d6">
+    <h2 id="h-d6">1/2 <small>Day 6 · 週六</small></h2>
+    <div class="group"><h3>摘要</h3><div class="cands"><article class="cand sum"><ul><li>逛菜市場：龍邊、同春（你指定。細節見下方「行程」卡片）</li><li>回程 18:20 → 21:55（已訂）</li></ul><details class="more"><summary>更多（2）</summary><ul><li>12:00 前退房（不是 13:30）</li><li>約 14:00 要離開市區去機場（推算）</li></ul></details></article></div></div>
+    <div id="c-d6" class="daycands"></div>
+    <div class="group"><h3>議題<small>4 項</small></h3><div class="cands"><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>龍邊市場是凌晨批發市場，要凌晨去還是白天去看</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>「同村」是不是同春市場，兩處哪個先去</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>飯店能不能晚退房</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>週六下午去機場的車程時間</p></article></div></div>
+  </section>
+
+  <section id="und" class="day" aria-labelledby="h-und">
+    <h2 id="h-und">未排日期 <small>通用議題</small></h2>
+    <div id="c-und" class="daycands"></div>
+    <div class="group"><h3>議題<small>5 項</small></h3><div class="cands"><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>陵區、文廟、火爐監獄、木偶戲原本排 12/29，被下龍灣取代。</p><details class="more"><summary>更多</summary><p>現在文廟、火爐監獄暫列 12/28 備選，木偶戲改列 1/1 備選，陵區暫列 12/31 白天；距住宿的步行時間還沒查。陵區週五休館，不能排 1/1</p></details></article><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>預算（人數已定：4 人）</p></article><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>偏好美食、歷史還是自然</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>胡志明陵的休館日與維修期</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>各景點與博物館的開放時間</p></article></div></div>
+  </section>
+
+  <section id="stay" class="day" aria-labelledby="h-stay">
+    <h2 id="h-stay">住宿 <small>已訂</small></h2>
+    <div class="twocol" style="margin-top:20px">
+      <details class="fold"><summary><h3>Tru by Hilton Hanoi Station</h3></summary>
+        <ul>
+          <li>地址：115 Tran Hung Dao, Cua Nam, Hoan Kiem 區。河內只有這一間 Tru，訂房網站的舊稱是 SOJO Hotel Ga Hanoi</li>
+          <li>位置：河內火車站正對面，約 170 公尺</li>
+          <li>入住 15:00，退房 12:00 前。櫃檯 24 小時，行李免費寄放。早到、晚退的政策未確認</li>
+          <li>到機場：27.46 公里，車程約 43 分鐘。Grab 價格未確認</li>
+          <li>早餐：自助式 06:00–10:00，Trip.com 列為成人免費</li>
+          <li>餐飲：有酒吧和 Tru Social 餐廳，沒有屋頂酒吧</li>
+          <li>評價：Trip.com 8.2（476 則）、Hotels.com 8.8、Expedia 8.6。評論提到火車聲、喇叭聲、薄牆。Booking 與 Google 未確認</li>
+        </ul>
+        <p class="note">Hilton 官網讀不到，以上多半來自訂房網站。入住時間與政策請向飯店確認。</p>
+      </details>
+      <details class="fold"><summary><h3>從住宿走出去<small style="font-family:var(--font-body);font-size:13px;color:var(--muted);font-weight:400;margin-left:8px">Google 地圖步行</small></h3></summary>
+        <ul>
+          <li>還劍湖：2.1 公里，步行 29 分</li>
+          <li>Dong Kinh Nghia Thuc 廣場（2025 年跨年主場）：Google 地圖沒查到廣場本身。OpenStreetMap 估約 1.6 公里，步行 19–24 分</li>
+          <li>Hàng Bạc 街：1.9 公里，26 分</li>
+          <li>訂房網站寫的「到舊城區 460 公尺」不對，Google 地圖算到 Hàng Bạc 街是 1.9 公里，不要採用</li>
+          <li>跨年夜從 Moonlight 走回 2.0 公里（28 分），從 Diamond 走回 1.9 公里（26 分）。Google 的最快路線經過 Hàng Bông，不經環湖路。封路範圍沒查到，人潮會讓時間更長</li>
+        </ul>
+        <p class="note">2026-10-14 查詢，沒有指定出發時間，不含跨年夜人潮。原始紀錄在 raw/hanoi-trip-2026-10/。</p>
+      </details>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(function () {
+  var START = 7, SPAN = 17;
+
+  // Only the booked flights are fixed. Everything else lives in the candidate pool below.
+  var days = [
+    ['12/28', '一', [{ s: 9.25, e: 11.583, t: '去程 09:15–11:35' }]],
+    ['12/29', '二', [{ s: 7, e: 20.5, t: '下龍灣 Cozy Bay 套票（含接送，約 07:00 接、約 20:30 回）', k: 'plan' }]],
+    ['12/30', '三', [{ s: 8, e: 18, t: '寧平 包車（約 8:00 出發，約 18:00–18:30 回到飯店，我的估算）', k: 'plan' }]],
+    ['12/31', '四', []],
+    ['1/1', '五', []],
+    ['1/2', '六', [{ s: 18.333, e: 21.917, t: '回程 18:20–21:55' }]]
+  ];
+
+  var pool = [
+    { name: '市區景點', hint: '半日以內', items: [
+      { n: '胡志明陵區', q: 'Ho Chi Minh Mausoleum', tags: ['半日', '上午'], d: '我記得陵區多半只在上午開放，週一和週五休館。未核對。一柱寺、主席府在附近。', was: '原草案 12/29，暫列 12/31 白天' },
+      { n: '文廟', q: 'Temple of Literature', tags: ['半日'], d: '越南第一所大學。離住宿的距離未查，地圖座標是估的。', was: '原草案 12/29，改列 12/28' },
+      { n: '火爐監獄', q: 'Hoa Lo Prison', tags: ['半日'], d: '法國殖民時期的監獄。離住宿的距離未查，地圖座標是估的。', was: '原草案 12/29，改列 12/28' },
+      { n: '水上木偶戲', q: 'Thang Long Water Puppet Theatre', tags: ['夜間'], d: '晚上場。週一到週六場次約 16:10、17:20、18:30、20:00，票 100,000–200,000 越南盾，11–3 月建議提前 3–7 天訂（旅遊網站資料，未核對）。', was: '原草案 12/29，曾列 12/28 晚上，改列 1/1（使用者指定）' }
+    ]},
+    { name: '近郊一日遊', hint: '要出城', items: [
+      { n: '寧平', q: 'Ninh Binh', tags: ['全日'], d: '12/30 包車往返（你指定）。包車全日一車約 USD 99–225（含導遊的行程，2026 年旅遊網站指南）；單程接送約 USD 50–70（2025 指南）。4 人座與 7 人座的價差未確認。門票通常不含：長安約 VND 250,000 每人（含船，售票 7:00–16:00，船程 2.5–3 小時），Mua 洞約 VND 100,000 每人。距離約 95 公里，走高速公路，車程約 1.5–2 小時。收費站平常塞 20 分鐘，尖峰到 45 分鐘。過路費、停車費、司機午餐、超時費誰付，要問車行。時間試算（我的估算）：8:00 出發，約 10:00 到長安，約 14:15 上 Mua 洞，約 18:00–18:30 回到飯店。12 月常有霧與毛毛雨，約 10–20 度。前一晚 12/29 約 20:00–20:30 才回到飯店，8:00 出發會累，可考慮 8:30。4 人成本粗估（USD，以 1 USD ≈ 25,000 VND 換算，不含午餐、小費）：車 99–225，門票 4 人約 56（每人 VND 350,000），合計約 155–281，每人約 39–70。', was: '你指定 12/30' }
+    ]},
+    { name: '寧平景點', hint: '12/30 · 全部未決 · 內容憑記憶，未核對', items: [
+      { n: '長安（Trang An）坐船', q: 'Trang An Scenic Landscape Complex Ninh Binh', qfull: true, tags: ['半日'], d: '小船穿過石灰岩山洞與稻田，一趟約 2–3 小時。跟三谷二選一。船票、營業時間、冬季是否營運皆未確認。' },
+      { n: '三谷（Tam Coc）坐船', q: 'Tam Coc Ninh Binh', qfull: true, tags: ['半日'], d: '沿河穿過山洞與稻田，時間比長安短。跟長安二選一。12 月稻田是收割後的樣子，我不確定景色。船票與營業時間未確認。' },
+      { n: 'Mua 洞觀景台', q: 'Hang Mua Ninh Binh', qfull: true, tags: ['半日'], d: '爬石階上山頂，看整片河谷。要爬幾百階。12 月可能起霧。階數、票價、開放時間未確認。' },
+      { n: '華閭（Hoa Lu）古都', q: 'Hoa Lu Ancient Capital Ninh Binh', qfull: true, tags: ['半日'], d: '越南早期的首都遺址，有古廟。路程短，適合順路。票價與開放時間未確認。' },
+      { n: '白殿寺（Bai Dinh）', q: 'Bai Dinh Pagoda Ninh Binh', qfull: true, tags: ['半日'], d: '規模很大的佛寺，要花不少時間。一天排不下，列著備用。未確認。' },
+      { n: '碧洞寺（Bich Dong）', q: 'Bich Dong Pagoda Ninh Binh', qfull: true, tags: ['半日'], d: '山間小寺，在三谷附近。若選三谷可以順路。未確認。' }
+    ]},
+    { name: '輕鬆半日', hint: '離舊城區 4–8 公里 · 全部未決', items: [
+      { n: '越南民族學博物館', q: 'Vietnam Museum of Ethnology', tags: ['半日'], d: '8:30–17:30，週一與春節休館，12/31（週四）有開。成人 40,000 越南盾。距舊城區約 8 公里，建議叫 Grab。來源：官方網站。', was: '原草案 12/31，改列 1/1', link: ['https://vme.org.vn', '官網（網址來自搜尋結果，我沒能開啟，未確認）'] },
+      { n: '西湖與鎮國寺', q: 'Tran Quoc Pagoda', tags: ['半日'], d: '免費。開放時間各來源不一致，下午去兩種說法都涵蓋。距舊城區約 4 公里，Grab 約 50,000–100,000 越南盾。', was: '原草案 12/31，改列 1/1' }
+    ]},
+    { name: '12/31 跨年夜', hint: '三選一 · 全部未決', items: [
+      { n: '還劍湖周邊', q: 'Hoan Kiem Lake', tags: ['夜間'], nye: true, d: '免費，氣氛最熱鬧。人很多，要防扒手。2026 官方公告未公布。往年：2025 年 19:00–24:00 在 Dong Kinh Nghia Thuc 廣場辦活動，煙火 23:45 起；2024 年 17:00 起封路。' },
+      { n: '高樓酒吧', nomap: true, tags: ['夜間'], nye: true, d: '室內看夜景比較舒服。要提早訂位，常有跨年套餐，價格較高。6 家候選見下方比較表。' },
+      { n: '飯店跨年晚宴', nomap: true, tags: ['夜間'], nye: true, d: '最省力。住宿 Tru 沒有屋頂酒吧，有大廳酒吧與 Tru Social 餐廳。12/31 有沒有活動未確認。' }
+    ]},
+    { name: '吃喝與購物', hint: '隨時可插', items: [
+      { n: '烤肉米線', nomap: true, tags: ['用餐'], d: '河內烤肉米線（bún chả）。', was: '原草案 12/28 晚' },
+      { n: 'Chả Cá Lã Vọng', tags: ['用餐'], d: '鬱金香煎魚。Cha Ca 街 14 號，約 350,000 越南盾每人。11–14、17–21 時。12/31 要不要訂位未確認，建議先電話 +84 4 3825 3929。', was: '原 12/31 晚餐候選，改列 12/28' },
+      { n: 'Bún chả Đắc Kim', tags: ['用餐'], d: 'Hàng Mành 街 1 號，約 40,000–60,000 越南盾。營業時間各來源不一致，肉賣完會提早收。', was: '原 12/31 晚餐候選，改列 12/28' },
+      { n: '蛋咖啡', nomap: true, tags: ['用餐'], d: '舊城區的咖啡店。', was: '原草案 1/2 上午，改列 12/28' },
+      { n: '舊城區買伴手禮', nomap: true, tags: ['半日'], d: '咖啡和茶。', was: '原草案 1/2 上午，改列 12/28' }
+    ]}
+  ];
+
+  var DAY = {
+    '烤肉米線': 'd1',
+    '水上木偶戲': 'd5', '文廟': 'd1', '火爐監獄': 'd1', 'Chả Cá Lã Vọng': 'd1', 'Bún chả Đắc Kim': 'd1', '蛋咖啡': 'd1', '舊城區買伴手禮': 'd1',
+    '寧平': 'd3', '長安（Trang An）坐船': 'd3', '三谷（Tam Coc）坐船': 'd3', 'Mua 洞觀景台': 'd3', '華閭（Hoa Lu）古都': 'd3', '白殿寺（Bai Dinh）': 'd3', '碧洞寺（Bich Dong）': 'd3',
+    '胡志明陵區': 'd4',
+    '越南民族學博物館': 'd5', '西湖與鎮國寺': 'd5', '還劍湖周邊': 'd4', '高樓酒吧': 'd4', '飯店跨年晚宴': 'd4'
+  };  // anything not listed goes to 'und' (not yet assigned)
+
+  function pct(h) { return (h - START) / SPAN * 100; }
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+
+  // grid
+  var grid = document.getElementById('grid');
+  var axis = el('div', 'axis');
+  axis.appendChild(el('div'));
+  var ticks = el('div', 'ticks');
+  for (var h = 8; h <= 24; h += 2) {
+    var s = el('span', h === 24 ? 'last' : '', (h < 10 ? '0' : '') + h);
+    s.style.left = pct(h) + '%';
+    ticks.appendChild(s);
+  }
+  axis.appendChild(ticks);
+  grid.appendChild(axis);
+
+  days.forEach(function (day) {
+    var row = el('div', 'row');
+    var lab = el('div', 'rowlabel');
+    var lb = el('b'); var la2 = el('a', '', day[0]);
+    la2.href = '#d' + (days.indexOf(day) + 1); lb.appendChild(la2);
+    lab.appendChild(lb);
+    lab.appendChild(el('small', '', '週' + day[1]));
+    row.appendChild(lab);
+    var track = el('div', 'track');
+    if (!day[2].length) track.appendChild(el('span', 'empty', '尚未安排'));
+    day[2].forEach(function (b) {
+      var n = el('div', 'blk' + (b.k ? ' ' + b.k : ''), b.t);
+      n.style.left = 'calc(' + pct(b.s) + '% + 1px)';
+      n.style.width = 'calc(' + (pct(b.e) - pct(b.s)) + '% - 2px)';
+      n.title = b.t;
+      track.appendChild(n);
+    });
+    row.appendChild(track);
+    grid.appendChild(row);
+  });
+
+  // 預計花費時間。'官網' 表示來自頁面已有的官網資料；'估' 是我方憑一般經驗估的，沒有來源
+  var DUR = {
+    '火車咖啡街': ['約 1–1.5 小時', '估'],
+    '三十六古街': ['約 2–3 小時', '估'],
+    '下龍灣：Cozy Bay 套票（含接送）': ['船上約 5.5 小時，全程約 7:00–20:30', '官網'],
+    '寧平': ['約 8–10 小時，含車程', '估'],
+    '長安（Trang An）坐船': ['約 2–3 小時', '估'],
+    '三谷（Tam Coc）坐船': ['約 1.5–2 小時', '估'],
+    'Mua 洞觀景台': ['約 1–1.5 小時', '估'],
+    '華閭（Hoa Lu）古都': ['約 1–1.5 小時', '估'],
+    '白殿寺（Bai Dinh）': ['約 1.5–2 小時', '估'],
+    '碧洞寺（Bich Dong）': ['約 0.5–1 小時', '估'],
+    '胡志明陵區': ['約 2–3 小時，含排隊', '估'],
+    '文廟': ['約 1–1.5 小時', '估'],
+    '火爐監獄': ['約 1–1.5 小時', '估'],
+    '水上木偶戲': ['約 1 小時', '估'],
+    '還劍湖與舊城區散步': ['約 1.5–2 小時', '估'],
+    '陶瓷村（Bat Trang）': ['約 2–3 小時', '估'],
+    '越南民族學博物館': ['約 2–3 小時', '估'],
+    '西湖與鎮國寺': ['約 2–3 小時', '估'],
+    '樂天中心河內（Lotte Center）': ['觀景台約 1–1.5 小時，不含用餐', '估']
+  };
+
+  // 營業時間。lv = 來源強度：官網（已核對）／二手報導／第三方／未確認。sub-agent 查，細節見 raw/hanoi-trip-2026-10/營業時間核對-sub-agent回報-2026-10-14.md
+  var HOURS = {
+  "胡志明陵區": {
+    "t": "週二至週日上午；週一、週五不開",
+    "lv": "二手報導",
+    "d": [
+      "陵：11–3 月 8:00 起，收館時間來源沒寫。",
+      "2026 年維修閉館 9/4–11/2，11/3 重開，12 月應已開放；維修是否延期未確認。",
+      "12/28（週一）與 1/1（週五）陵不開。元旦特例未確認。",
+      "一柱寺、主席府、博物館：未找到官方時間。單一搜尋摘要稱高腳屋冬季 8:00–11:00、週一週五休，未核對。各點小額收費約 25,000 越南盾（年份未標）。"
+    ],
+    "src": [
+      [
+        "越通社英文報導（二手，非陵管理局原文）",
+        "https://en.vietnamplus.vn/ho-chi-minh-mausoleum-to-close-for-restoration-from-september-4-post349788.vnp"
+      ]
+    ]
+  },
+  "文廟": {
+    "t": "每天 8:00–17:00；週三、六、日另有夜遊 18:30–22:00",
+    "lv": "官網，已核對",
+    "d": [
+      "官網未列假日時間，假日請電話 0243.7472566 確認。",
+      "夜遊另有票價，金額未確認。",
+      "成人票 70,000 越南盾（sub-agent 回報，年份未標，我未核對）。"
+    ],
+    "src": [
+      [
+        "文廟官網",
+        "https://vanmieu.gov.vn"
+      ]
+    ]
+  },
+  "火爐監獄": {
+    "t": "每天 8:00–17:00，含節日與 Tết",
+    "lv": "官網，已核對",
+    "d": [
+      "票價未確認：第三方部落格寫 30,000 與 50,000 越南盾，互相矛盾（年份未標）。"
+    ],
+    "src": [
+      [
+        "火爐監獄官網",
+        "https://hoalo.vn"
+      ]
+    ]
+  },
+  "水上木偶戲": {
+    "t": "週一至週六 16:10、17:20、18:30、20:00；週日另有早場",
+    "lv": "第三方",
+    "d": [
+      "12/31 與 1/1 的場次未確認，假日場次會變動，要向劇院確認。",
+      "票價 100,000／150,000／200,000 越南盾（年份未標）。兩個來源對應的座位等級不一致，並列不挑。",
+      "官方網站讀得到但沒有場次與票價，頁尾有大量賭博連結，不要點。"
+    ],
+    "src": [
+      [
+        "vietnamtourism.com（第三方）",
+        "https://www.vietnamtourism.com/en/thang-long-water-puppet-theatre-in-hanoi-showtimes-tickets-and-how-long-it-lasts"
+      ]
+    ]
+  },
+  "還劍湖與舊城區散步": {
+    "t": "湖：未確認；玉山祠 部落格稱週一至週四 7:00–19:00、週五至週日 7:00–22:00",
+    "lv": "未確認",
+    "d": [
+      "祠的時間只有單一部落格來源，門票 30,000–50,000 越南盾（區間，年份未標）。"
+    ],
+    "src": [
+      [
+        "jackfruitadventure.com（部落格）",
+        "https://jackfruitadventure.com/ngoc-son-temple-a-must-see-cultural-gem/"
+      ]
+    ]
+  },
+  "火車咖啡街": {
+    "t": "咖啡店時間未確認；火車約每 3–4 小時一班（部落格，時刻不準）",
+    "lv": "未確認",
+    "d": [
+      "可進入，但規定常變，多半要經咖啡店帶入並消費。",
+      "2025/3 有報導稱市旅遊局請旅行社勿帶團；2025/11 警方清場後咖啡店兩天又擺桌。",
+      "2026/1 有報導稱河內提案在舊城區段停駛客運列車，是否通過未確認。這是影響最大的風險，只看到搜尋摘要，我未核對。"
+    ],
+    "src": [
+      [
+        "themanduls.com",
+        "https://themanduls.com/blog/hanoi-train-street/"
+      ]
+    ]
+  },
+  "越南民族學博物館": {
+    "t": "8:30–17:30，週一與春節休館",
+    "lv": "官網，已核對",
+    "d": [
+      "12/28 是週一，休館。",
+      "元旦與跨年夜有無異動未確認。",
+      "官網 vme.org.vn 讀不到（403），上面的時間來自 vme-en.vass.gov.vn。"
+    ],
+    "src": [
+      [
+        "博物館英文官網",
+        "https://vme-en.vass.gov.vn/"
+      ]
+    ]
+  },
+  "西湖與鎮國寺": {
+    "t": "兩說並列：8:00–16:00，或 7:30–11:30 與 13:30–18:30",
+    "lv": "未確認",
+    "d": [
+      "前者來自 hnvjourneys.com（非官方），後者來自 Vietnam Airlines 旅遊指南（搜尋摘要）。兩者都沒有官方來源，不能判定哪個對。",
+      "hnvjourneys 另寫每月 1 日與 15 日 6:00–20:00，但同頁一處寫農曆、一處寫月曆，互相矛盾。"
+    ],
+    "src": [
+      [
+        "hnvjourneys.com",
+        "https://hnvjourneys.com/blog/visit-tran-quoc-pagoda.html"
+      ]
+    ]
+  },
+  "陶瓷村（Bat Trang）": {
+    "t": "村 8:00–17:00 或 18:00（來源不一）；陶瓷博物館平日 8:00–17:30、週末 8:00–18:00",
+    "lv": "第三方",
+    "d": [
+      "只看到搜尋摘要，Vietnam Airlines 頁 404。休館日與 12/31、1/1 狀況未確認。",
+      "工作坊：博物館內 20,000 與 70,000 越南盾兩說矛盾（年份未標）。民營 3 小時班要線上預約，能否現場報名未確認。"
+    ],
+    "src": [
+      [
+        "hanoivoyage.com（搜尋摘要）",
+        "https://hanoivoyage.com/en/blog/visiting-bat-trang-pottery-village.html"
+      ]
+    ]
+  },
+  "樂天中心河內（Lotte Center）": {
+    "t": "觀景台 9:30–22:30（多數來源）；Top of Hanoi 17:00–24:00",
+    "lv": "第三方",
+    "d": [
+      "觀景台另有 9:00–23:00 一說。樂天官網連不上，12/31 與元旦是否照常未確認。",
+      "Top of Hanoi 17:00–24:00 來自 Lotte Hotel 官方文件 PDF（sub-agent 讀過，我未核對）；不可穿拖鞋或無袖上衣；12/31 安排與訂位規定未確認。"
+    ],
+    "src": [
+      [
+        "Lotte Hotel 服務目錄 PDF",
+        "https://app.lottehotel.com/cms/asset/2026/01/22/36210/ServiceDirectory.pdf"
+      ]
+    ]
+  },
+  "寧平": {
+    "t": "12/30 是否休息或管制",
+    "lv": "未確認",
+    "d": [
+      "沒有任何來源提到 12/30 的休息或管制，行前再問售票處或旅行社。"
+    ]
+  },
+  "長安（Trang An）坐船": {
+    "t": "冬季 7:00–16:30；售票平日 6:30–17:00、週末 6:00–17:00",
+    "lv": "第三方",
+    "d": [
+      "最後一班船時間未確認，只知道 16:30 收。",
+      "成人票兩說並列：250,000 越南盾（當地旅遊局價目表，2025-03 版）與 350,000（vietnamvacation，2026）。同一頁另有項目寫 250,000，自相矛盾。",
+      "天候不佳時可能暫停售票。"
+    ],
+    "src": [
+      [
+        "vinwonders.com",
+        "https://vinwonders.com/en/wonderpedia/news/trang-an-boat-tour/"
+      ],
+      [
+        "當地旅遊局價目表",
+        "https://dulichninhbinh.com.vn/en/cat/0502"
+      ]
+    ]
+  },
+  "三谷（Tam Coc）坐船": {
+    "t": "8:30–18:30（另一說 8:00–18:00）",
+    "lv": "第三方",
+    "d": [
+      "船費整艘計價，不是每人：250,000 越南盾每船（外國人 2 人，vietnamvacation 2026）。入場費與船費是否疊加未確認。",
+      "官方價目表（2025）入場成人 250,000、兒童 120,000 越南盾。"
+    ],
+    "src": [
+      [
+        "vietnamvacation.com.vn",
+        "https://vietnamvacation.com.vn/ninh-binh-entrance-fee/"
+      ]
+    ]
+  },
+  "Mua 洞觀景台": {
+    "t": "6:00–19:00（另有 7:00–17:00、6:00–18:00 兩說）",
+    "lv": "第三方",
+    "d": [
+      "票價 100,000 越南盾（官方價目表 2025 與 vietnamvacation 2026 一致）。",
+      "階數約 500 階，只見於搜尋摘要的部落格，未核對。"
+    ],
+    "src": [
+      [
+        "vietnamvacation.com.vn",
+        "https://vietnamvacation.com.vn/ninh-binh-entrance-fee/"
+      ]
+    ]
+  },
+  "華閭（Hoa Lu）古都": {
+    "t": "7:00–23:00",
+    "lv": "第三方",
+    "d": [
+      "成人 20,000、6–15 歲 10,000 越南盾（兩處一致，2025 與 2026）。官方價目表沒列時間。"
+    ],
+    "src": [
+      [
+        "vietnamvacation.com.vn",
+        "https://vietnamvacation.com.vn/ninh-binh-entrance-fee/"
+      ]
+    ]
+  },
+  "白殿寺（Bai Dinh）": {
+    "t": "6:00–22:00",
+    "lv": "第三方",
+    "d": [
+      "寺本身免費。電瓶車來回成人 100,000、寶塔 60,000、套票 150,000 越南盾（官方價目表 2025，vietnamvacation 2026 一致）。"
+    ],
+    "src": [
+      [
+        "當地旅遊局價目表",
+        "https://dulichninhbinh.com.vn/en/cat/0502"
+      ]
+    ]
+  },
+  "碧洞寺（Bich Dong）": {
+    "t": "併入三谷票，8:30–18:30；獨立時間未確認",
+    "lv": "第三方",
+    "d": [
+      "另有搜尋摘要稱 Thach Bich Thung Nang 路線 20,000 越南盾，未核對。"
+    ],
+    "src": [
+      [
+        "vietnamvacation.com.vn",
+        "https://vietnamvacation.com.vn/ninh-binh-entrance-fee/"
+      ]
+    ]
+  }
+};
+
+  // candidates, placed under the day they were suggested for
+  function card(it, sure) {
+    var c = el('article', 'cand' + (it.nye ? ' night' : '') + (sure ? ' sure' : ''));
+    c.appendChild(el('h4', '', it.n));
+    var tags = el('div', 'tags');
+    it.tags.forEach(function (t) { tags.appendChild(el('span', t === '已決定' ? 'tag sure' : 'tag dur', t)); });
+    if (it.nye) tags.appendChild(el('span', 'tag nye', '12/31'));
+    var du = DUR[it.n];
+    if (du) tags.appendChild(el('span', 'tag time', '⏱ ' + du[0] + (du[1] === '估' ? '（估）' : '（官網）')));
+    c.appendChild(tags);
+    var ls = it.lines, rest = [];
+    if (ls) { rest = ls.slice(2); ls = ls.slice(0, 2); }
+    else {
+      var t0 = it.d, k0 = t0.indexOf('。');
+      if (t0.length > 48 && k0 > 0 && k0 < t0.length - 1) { ls = [t0.slice(0, k0 + 1)]; rest = [t0.slice(k0 + 1)]; }
+      else ls = [t0];
+    }
+    ls.forEach(function (t) { c.appendChild(el('p', '', t)); });
+    if (rest.length) {
+      var dt = el('details', 'more');
+      dt.appendChild(el('summary', '', '更多'));
+      rest.forEach(function (t) { dt.appendChild(el('p', '', t)); });
+      c.appendChild(dt);
+    }
+    var hr = HOURS[it.n];
+    if (hr) {
+      var hp = el('p', 'hours');
+      hp.appendChild(el('b', '', '🕒 '));
+      hp.appendChild(document.createTextNode(hr.t));
+      hp.appendChild(el('span', 'lv lv-' + (hr.lv.indexOf('官網') === 0 ? 'official' : hr.lv === '未確認' ? 'unk' : 'third'), '（' + hr.lv + '）'));
+      c.appendChild(hp);
+      var hd = el('details', 'more');
+      hd.appendChild(el('summary', '', '營業時間細節'));
+      hr.d.forEach(function (t) { hd.appendChild(el('p', '', t)); });
+      (hr.src || []).forEach(function (sr) {
+        var sp = el('p'); var sa = el('a', '', '來源：' + sr[0]);
+        sa.href = sr[1]; sa.target = '_blank'; sa.rel = 'noopener';
+        sp.appendChild(sa); hd.appendChild(sp);
+      });
+      c.appendChild(hd);
+    }
+    if (!it.nomap) {
+      var gp = el('p');
+      var ga = el('a', '', 'Google 地圖');
+      ga.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(it.qfull ? it.q : (it.q || it.n) + ' Hanoi');
+      ga.target = '_blank'; ga.rel = 'noopener';
+      gp.appendChild(ga);
+      c.appendChild(gp);
+    }
+    if (it.link) {
+      var lp = el('p');
+      var la = el('a', '', it.link[1]);
+      la.href = it.link[0]; la.target = '_blank'; la.rel = 'noopener';
+      lp.appendChild(la);
+      c.appendChild(lp);
+    }
+    return c;
+  }
+  // travel time between two 行程 cards (either order); source: Google Maps, see raw/hanoi-trip-2026-10/
+  var LEGS = [
+    { a: '火車咖啡街', b: '三十六古街', walk: '34 分 · 2.5 公里', car: '17 分 · 3.8 公里',
+      note: '2026-10-14 查。起點是 Google 解析的火車街入口 Ngõ 224 Lê Duẩn，終點是 Hàng Bạc 街的一個點。開車含即時路況，跨年與假日會更久。兩處哪個先去還沒決定，這段不分方向。' },
+    { a: '龍邊市場（Chợ Long Biên）', b: '同春市場（Chợ Đồng Xuân）', walk: '7 分 · 500 公尺', car: '5 分 · 1.1 公里',
+      note: '2026-10-14 查，Google 地圖，從同春出發，開車用查詢當下的路況。兩處哪個先去還沒決定，這段不分方向。' }
+  ];
+  function leg(x, y) {
+    var f = LEGS.filter(function (l) { return (l.a === x.n && l.b === y.n) || (l.a === y.n && l.b === x.n); })[0];
+    var box = el('div', 'leg');
+    box.appendChild(el('div', 'legline', f ? '⇄ ' + x.n + ' 與 ' + y.n + '　步行 ' + f.walk + '　開車 ' + f.car : '⇄ ' + x.n + ' 與 ' + y.n + '　交通時間未查'));
+    if (f && f.note) {
+      var dt = el('details', 'more');
+      dt.appendChild(el('summary', '', '更多'));
+      dt.appendChild(el('p', '', f.note));
+      box.appendChild(dt);
+    }
+    return box;
+  }
+  // 行程 = decided; 備選 = still open
+  var sure = [
+  {
+    "day": "d2",
+    "n": "下龍灣：Cozy Bay 套票（含接送）",
+    "tags": [
+      "全日",
+      "已決定"
+    ],
+    "lines": [
+      "12/29 買套票（你決定，不包車）：Cozy Bay Premium Day Cruise（營運商 Cozy Vietnam Travel Group）。",
+      "官網價格 USD 49 起（頁面只寫 $，年份未標），含接送、海鮮自助午餐、驚訝洞門票、划船、Titov 島、日落酒，直訂送一份飲料。其他代理商的含接送團費約 USD 49–66 每人。",
+      "4 人成本粗估（USD，不含小費與船上額外消費）：約 196–264，每人約 49–66。",
+      "官網時間：07:00 飯店接送，11:30 在 Tuan Chau 上船，17:00 返航，約 20:30 回到河內。船上約 5.5 小時，行程偏緊。另一家代理商寫 08:00 接、21:00 送回，各家說法不一致。",
+      "接送：官網說 Trần Hưng Đạo、Lê Duẩn 一帶的飯店 07:00 直接接送。你的住宿在 115 Trần Hưng Đạo，很可能涵蓋，但官網沒寫門牌，要跟業者確認。",
+      "備案是走到集合點：AHA Cafe（22 Tràng Thi，07:20）步行 1.1 公里、15 分；WinMart（4B Tràng Thi，07:10）1.3 公里、18 分；歌劇院（07:45）2.1 公里、29 分（Google 地圖）。",
+      "取消：官網寫 24 小時前免費。天候停航怎麼處理、冬季營運，未確認。",
+      "當晚趕不上木偶戲。"
+    ],
+    "q": "Tuan Chau Marina Ha Long",
+    "qfull": true
+  },
+  {
+    "day": "d1",
+    "n": "火車咖啡街",
+    "tags": ["半日", "已決定"],
+    "lines": [
+      "鐵軌兩側的咖啡店，火車經過時要貼牆等。",
+      "位置：河內火車站一帶。你的住宿在火車站正對面，離咖啡街的距離未查。",
+      "我記得近年當局多次限制遊客進入鐵軌區，現在開放狀況未確認。去之前先查最新消息。",
+      "火車通過的時刻表未確認。"
+    ],
+    "q": "Hanoi Train Street",
+    "qfull": false
+  },
+  {
+    "day": "d1",
+    "n": "三十六古街",
+    "tags": ["半日", "已決定"],
+    "lines": [
+      "河內舊城區的商業街區，每條街原本賣一種東西。",
+      "從住宿走到 Hàng Bạc 街：1.9 公里，步行 26 分（Google 地圖，2026-10-14 查）。",
+      "訂房網站寫的「到舊城區 460 公尺」不對，不要採用。",
+      "各街店家營業時間未確認。"
+    ],
+    "q": "Hang Bac Street",
+    "qfull": false
+  },
+  {
+    "day": "d1",
+    "n": "還劍湖與舊城區散步",
+    "tags": ["半日", "已決定"],
+    "lines": [
+      "12/28 抵達當天散步（你指定）。",
+      "從住宿到還劍湖：2.1 公里，步行 29 分（Google 地圖，2026-10-14 查）。",
+      "玉山祠開放時間只有一個部落格來源：週一至週四 7:00–19:00、週五至週日 7:00–22:00。湖本身的開放時間未確認。",
+      "和火車咖啡街、三十六古街的先後順序未決。"
+    ],
+    "q": "Hoan Kiem Lake",
+    "qfull": false
+  },
+  {
+    "day": "d4",
+    "n": "陶瓷村（Bat Trang）",
+    "tags": ["半日", "已決定"],
+    "lines": [
+      "12/31 白天去（你指定）。位在市區東南郊的陶瓷村，可逛陶瓷店與博物館。",
+      "營業時間：村 8:00–17:00 或 18:00（來源不一致）；陶瓷博物館平日 8:00–17:30、週末 8:00–18:00。12/31 是週四。",
+      "從住宿過去的距離、車程、Grab 費用：未查。",
+      "晚上要跨年熬夜，回程時間要留夠。"
+    ],
+    "q": "Bat Trang Ceramic Village",
+    "qfull": false
+  },
+  {
+    "day": "d5",
+    "n": "樂天中心河內（Lotte Center）",
+    "tags": ["半日", "已決定"],
+    "lines": [
+      "地址：54 Liễu Giai, Ba Đình。你指定 1/1 去。",
+      "建議順序（我的安排，非來源）：中午出發 → 先吃飯 → 下午上 65 樓觀景台 → 傍晚看夕陽 → 17:00 後可去 Top of Hanoi 喝一杯或晚餐。前一晚跨年，所以不排早。",
+      "觀景台 Hanoi Sky：每日 9:30–22:30。平日票成人 230,000、兒童（3–12 歲）170,000 越南盾，含 VAT，年份未標。現場可買，不用預訂（官網 observationdeck.lottecenter.com.vn）。",
+      "1/1 營業：使用者確認會營業（確認依據未記錄，網路上查不到元旦公告）。1/1 是假日，官網沒列假日的一般票價，假日價是否不同未確認。",
+      "觀景台有玻璃地板（官網稱 Sky Walk）。是否另收費未確認。VR 等加價項目另計，假日價較高（VR 約 150,000–160,000 越南盾每人）。",
+      "吃飯：B1 的 Lotte Mart 有韓式熟食與用餐區（2024 年報導，營業時間 9:00 或 9:30 到 22:00，兩個來源不一致）。1–2 樓有 Pizza 4P's（來源弱）。1/1 這些店是否營業未確認。",
+      "Top of Hanoi 在樂天中心，不是別處。它在 Lotte Hotel 65 樓，17:00–24:00（搜尋摘要，官方頁讀不到）。白天不開，不能當午餐。訂位規定未確認。",
+      "從住宿過去：Lonely Planet 說離舊城約 20 分鐘車程。這是舊城出發，不是你的住宿出發。Grab 費用與距離未確認，我沒能用 Google 地圖實測。",
+      "樂天中心附近有沒有可步行的景點（西湖、鎮國寺）：距離未確認。"
+    ],
+    "q": "Lotte Center Hanoi",
+    "qfull": false
+  },
+  {
+    "day": "d6",
+    "n": "龍邊市場（Chợ Long Biên）",
+    "tags": ["半日", "已決定"],
+    "lines": [
+      "1/2 逛菜市場，你指定龍邊與同春（Đồng Xuan，你寫「同村」，我當成同春，請確認）。兩處順序還沒定。",
+      "龍邊是批發市場，主要在夜間到清晨交易。有來源寫約 22:00 開到天亮，另一來源寫午夜到約 6:00。最熱鬧約 2:00–5:00（Vietnam Airlines 旅遊指南、Vinpearl，兩者都是旅遊網站，未讀官方資料）。",
+      "這跟「1/2 上午逛」可能衝突：天亮後攤位會收，白天去可能只剩零星攤販。要凌晨去還是白天去看，需要你決定。",
+      "凌晨去的話，1/1 晚上還要早睡或不睡，而且 1/2 要退房、傍晚搭機，體力要算進去。夜間交通建議用 Grab（來源建議）。",
+      "從住宿過去（Google 地圖，2026-10-14 查，開車用查詢當下路況）：開車 13 分、3.5 公里；步行 36 分、2.6 公里。凌晨的車程沒查。白天還有沒有攤：未確認。"
+    ],
+    "q": "Long Bien Market",
+    "qfull": false
+  },
+  {
+    "day": "d6",
+    "n": "同春市場（Chợ Đồng Xuân）",
+    "tags": ["半日", "已決定"],
+    "lines": [
+      "舊城區最大的室內市場，賣衣服、電子產品、紀念品、乾貨與生鮮。",
+      "白天約 6:00–18:00 每日營業（Vietnam Airlines 旅遊指南）。2016 年的部落格另寫夜市約 20:00–2:00，年份太舊，未確認。",
+      "週五到週日 18:00–23:00 的週末夜市從 Hàng Đào 街延伸到同春市場。1/2 是週六，但你的班機 18:20 起飛，趕不上，不用排。",
+      "元旦後一天是否照常營業：未確認。從住宿過去（Google 地圖，2026-10-14 查，開車用查詢當下路況）：開車 11 分、2.9 公里；步行 30 分、2.2 公里。與龍邊之間步行只要 7 分、500 公尺。"
+    ],
+    "q": "Dong Xuan Market",
+    "qfull": false
+  }
+];
+  var sureBy = {};
+  sure.forEach(function (it) { (sureBy[it.day] = sureBy[it.day] || []).push(it); });
+  Object.keys(sureBy).forEach(function (d) {
+    var root = document.getElementById('c-' + d);
+    var box = el('div', 'group');
+    var h3 = el('h3', '', '行程');
+    h3.appendChild(el('small', '', '已決定 · ' + sureBy[d].length + ' 項'));
+    box.appendChild(h3);
+    var list = el('div', 'cands seq');
+    sureBy[d].forEach(function (it, i) {
+      if (i > 0) list.appendChild(leg(sureBy[d][i - 1], it));
+      list.appendChild(card(it, true));
+    });
+    box.appendChild(list);
+    root.insertBefore(box, root.firstChild);
+  });
+  pool.forEach(function (g) {
+    var byDay = {};
+    g.items.forEach(function (it) { (byDay[DAY[it.n] || 'und'] = byDay[DAY[it.n] || 'und'] || []).push(it); });
+    Object.keys(byDay).forEach(function (d) {
+      var root = document.getElementById('c-' + d);
+      if (!root) return;
+      var box = el('div', 'group');
+      var h3 = el('h3', '', '備選：' + g.name);
+      h3.appendChild(el('small', '', g.hint + ' · ' + byDay[d].length + ' 項'));
+      box.appendChild(h3);
+      var list = el('div', 'cands');
+      byDay[d].forEach(function (it) { list.appendChild(card(it)); });
+      box.appendChild(list);
+      root.appendChild(box);
+    });
+  });
+
+  // map: coordinates are approximate and unverified
+  if (window.L) {
+    var map = L.map('map', { scrollWheelZoom: false }).setView([21.032, 105.846], 13);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    var places = [
+      ['胡志明陵區', 21.0368, 105.8346, 'sight', '半日 · 上午。休館日未核對'],
+      ['文廟', 21.0286, 105.8355, 'sight', '半日'],
+      ['火爐監獄', 21.0252, 105.8467, 'sight', '半日'],
+      ['昇龍水上木偶戲院', 21.0316826, 105.8533466, 'sight', '夜間場'],
+      ['還劍湖', 21.0285, 105.8522, 'sight', '舊城區散步 · 12/31 跨年人潮'],
+      ['越南民族學博物館', 21.0407, 105.7985, 'sight', '8:30–17:30 · 距舊城區約 8 公里'],
+      ['西湖與鎮國寺', 21.0486, 105.8365, 'sight', '免費 · 距舊城區約 4 公里'],
+      ['Chả Cá Lã Vọng', 21.0343, 105.8503, 'food', 'Cha Ca 街 14 號'],
+      ['Bún chả Đắc Kim', 21.0334, 105.8490, 'food', 'Hàng Mành 街 1 號'],
+      ['Moonlight Sky Bar', 21.0344, 105.8510, 'bar', '馬梅街 94 號 11 樓'],
+      ['Diamond Sky Bar', 21.0348, 105.8532, 'bar', 'Ta Hien 街 22 號'],
+      ['陶瓷村（Bat Trang）', 20.9758, 105.9141, 'sight', '半日 · 在市區東南郊'],
+      ['Tru by Hilton Hanoi Station', 21.02385, 105.84185, 'hotel', '住宿 · 115 Tran Hung Dao · 河內火車站正對面'],
+      ['內排機場', 21.2212, 105.8072, 'air', '去程降落、回程起飛']
+    ];
+    var pts = [];
+    places.forEach(function (p) {
+      var icon = L.divIcon({ className: '', html: '<div class="pin ' + p[3] + '"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
+      var m = L.marker([p[1], p[2]], { icon: icon, title: p[0] }).addTo(map);
+      var box = document.createElement('div');
+      box.appendChild(el('b', '', p[0]));
+      box.appendChild(document.createElement('br'));
+      box.appendChild(document.createTextNode(p[4]));
+      box.appendChild(document.createElement('br'));
+      var a = el('a', '', '在 Google 地圖開啟');
+      a.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(p[0].replace(/（.*/, '') + ' Hanoi');
+      a.target = '_blank'; a.rel = 'noopener';
+      box.appendChild(a);
+      m.bindPopup(box);
+      if (p[3] !== 'air') pts.push([p[1], p[2]]);
+    });
+    map.fitBounds(pts, { padding: [24, 24] });
+  } else {
+    document.getElementById('map').textContent = '地圖載入失敗，請檢查網路。';
+  }
+})();
+</script>
+</body>
+</html>
