@@ -71,8 +71,8 @@
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .sw { width: 22px; height: 14px; border-radius: 3px; display: inline-block; }
 
-  .gridbox { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
-  .grid { min-width: 880px; padding: 14px 16px 16px; }
+  .gridbox { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .grid { min-width: 0; padding: 14px 16px 16px; }
   .axis, .row { display: grid; grid-template-columns: 76px 1fr; column-gap: 10px; }
   .axis { margin-bottom: 4px; }
   .ticks { position: relative; height: 18px; }
@@ -102,8 +102,9 @@
 
 
   .mapbox { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
-  #map { height: 480px; width: 100%; }
-  @media (max-width: 760px) { #map { height: 380px; } }
+  .map { height: 420px; width: 100%; }
+  @media (max-width: 760px) { .map { height: 300px; } }
+  .daymap .legend { margin: 0; }
   .pin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.45); }
   .pin.sight { background: #1d6a73; }
   .pin.food { background: #c0561a; }
@@ -113,9 +114,15 @@
   .leaflet-popup-content { font-family: var(--font-body); font-size: 13px; line-height: 1.5; margin: 10px 12px; color: #14262b; }
   .leaflet-popup-content b { font-size: 14px; }
 
-  .tabs { position: sticky; top: 0; z-index: 1000; display: flex; gap: 8px; padding: 8px 0; background: var(--bg); }
+  html, body { overflow-x: clip; overscroll-behavior-x: none; }
+  .tabs { position: sticky; top: 0; z-index: 1100; display: flex; gap: 8px; padding: 8px 0; background: var(--bg); }
   .tabs a { padding: 4px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); text-decoration: none; font-size: 14px; }
   .tabs a:hover { border-color: var(--accent); color: var(--accent); }
+  .tabs a[aria-current="page"] { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+  [hidden] { display: none !important; }
+  .pager { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 16px; }
+  .pager a { color: var(--accent); text-decoration: none; font-size: 14px; padding: 6px 0; }
+  .pager a:only-child.next { margin-left: auto; }
   html { scroll-behavior: smooth; }
   section[id] { scroll-margin-top: 56px; }
   section > h2 { margin-bottom: 12px; }
@@ -140,7 +147,7 @@
   .pool > p { color: var(--muted); }
   .group { display: grid; gap: 12px; }
   .group h3 small { font-family: var(--font-body); font-size: 13px; color: var(--muted); font-weight: 400; margin-left: 8px; }
-  .cands { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .cands { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 12px; }
   .cand {
     background: var(--surface);
     border: 1.5px dashed var(--warn);
@@ -167,11 +174,12 @@
   tr:last-child td { border-bottom: 0; }
   td:first-child { font-weight: 500; white-space: nowrap; }
 
-  .twocol { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .twocol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px; }
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
   .panel ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
-  .tabs { overflow-x: auto; white-space: nowrap; }
-  .tabs a { flex: none; }
+  .tabs { flex-wrap: wrap; gap: 6px; }
+  .tabs a { flex: none; white-space: nowrap; }
+  @media (max-width: 700px) { .tabs a { padding: 3px 12px; font-size: 13.5px; } }
   .day { display: grid; gap: 16px; align-content: start; }
   .day > h2 small { font-family: var(--font-body); font-size: 13px; color: var(--muted); font-weight: 400; margin-left: 8px; }
   .conf { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--ink); border-radius: 8px; padding: 14px 18px; display: grid; gap: 8px; }
@@ -208,6 +216,32 @@
   .cand a, td a { color: var(--accent); overflow-wrap: anywhere; }
   .foot a { color: var(--accent); overflow-wrap: anywhere; }
   a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .hint-wide { display: block; font-size: 12px; color: var(--muted); }
+
+  /* 窄螢幕：時間軸改成直列清單，酒吧比較表改成一家一張卡 */
+  @media (max-width: 700px) {
+    body { padding-block: 16px 40px; }
+    .wrap { gap: 24px; }
+    .axis { display: none; }
+    .row { grid-template-columns: 56px 1fr; }
+    .row:first-of-type { border-top: 0; }
+    .track { height: auto; background: none; border-right: 0; padding: 8px 0; display: grid; gap: 6px; }
+    .track .empty { position: static; padding: 0; }
+    .blk { position: static; width: auto !important; height: auto; white-space: normal; line-height: 1.45; padding: 6px 10px; }
+    .leg { margin-left: 8px; }
+    .fold { padding: 0 14px; }
+    .fold > summary { flex-wrap: wrap; }
+  }
+  /* 跨年酒吧比較表：所有寬度都改成一家一張卡，不用水平捲動 */
+  .tablewrap:has(table.wide) { overflow: visible; background: none; border: 0; }
+  table.wide { min-width: 0; display: block; }
+  table.wide thead { display: none; }
+  table.wide tbody { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap: 12px; }
+  table.wide tr { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 0; }
+  table.wide td, table.wide td:first-child { display: block; position: static; min-width: 0; border: 0; padding: 3px 14px; white-space: normal; background: none; }
+  table.wide td:first-child { font-size: 15px; font-weight: 700; padding-bottom: 6px; }
+  table.wide td:not(:first-child) { display: grid; grid-template-columns: 5.5em 1fr; gap: 8px; }
+  table.wide td:not(:first-child)::before { content: attr(data-label); color: var(--muted); font-size: 12px; padding-top: 2px; }
 </style>
 </head>
 <body>
@@ -215,20 +249,19 @@
   <header class="head">
     <h1>河內六天五夜</h1>
     <p class="range">2026/12/28（一）– 2027/1/2（六）</p>
-    <p class="note">草稿。大方向：12/28 與 12/31 在住宿附近、12/29 下龍灣、12/30 寧平、12/31 晚上跨年；1/1、1/2 還沒定。景點資訊多半來自記憶，沒核對過來源。⏱ 是預計花費時間，標「估」的是我憑一般經驗估的，不是來源說的。</p>
-    <nav class="tabs" aria-label="章節">
-      <a href="#s-plan">總覽</a>
-      <a href="#s-map">地圖</a>
-      <a href="#d1">12/28</a>
-      <a href="#d2">12/29</a>
-      <a href="#d3">12/30</a>
-      <a href="#d4">12/31</a>
-      <a href="#d5">1/1</a>
-      <a href="#d6">1/2</a>
-      <a href="#und">未排日期</a>
-      <a href="#stay">住宿</a>
-    </nav>
+    <p class="note">草稿。大方向：12/28 與 12/31 在住宿附近、12/29 下龍灣、12/30 寧平、12/31 晚上在酒吧跨年（哪一家 11 月再決定）；1/1、1/2 還沒定。景點資訊多半來自記憶，沒核對過來源。⏱ 是預計花費時間，標「估」的是我憑一般經驗估的，不是來源說的。</p>
   </header>
+  <nav class="tabs" id="tabs" aria-label="切換日期">
+    <a href="#s-plan">總覽</a>
+    <a href="#d1">12/28</a>
+    <a href="#d2">12/29</a>
+    <a href="#d3">12/30</a>
+    <a href="#d4">12/31</a>
+    <a href="#d5">1/1</a>
+    <a href="#d6">1/2</a>
+    <a href="#und">未排日期</a>
+    <a href="#stay">住宿</a>
+  </nav>
 
   <section id="s-plan" aria-labelledby="g">
     <h2 id="g">總覽</h2>
@@ -237,21 +270,8 @@
       <div class="fact"><div class="lab">回程（已訂）</div><div class="val">18:20 → 21:55</div></div>
       <div class="fact"><div class="lab">住宿（已訂）</div><div class="val" style="font-size:14px">Tru by Hilton Hanoi Station</div></div>
     </div>
-    <p class="scrollhint">表格可以左右滑動。</p>
     <div class="gridbox"><div class="grid" id="grid"></div></div>
-  </section>
-
-  <section id="s-map" aria-labelledby="m">
-    <h2 id="m">地圖</h2>
-    <div class="legend" aria-label="地圖圖例">
-      <span><i class="sw pin sight" style="width:14px"></i>景點</span>
-      <span><i class="sw pin food" style="width:14px"></i>餐廳</span>
-      <span><i class="sw pin bar" style="width:14px"></i>跨年酒吧</span>
-      <span><i class="sw pin air" style="width:14px"></i>機場</span>
-      <span><i class="sw pin hotel" style="width:14px"></i>住宿</span>
-    </div>
-    <div class="mapbox"><div id="map" role="application" aria-label="河內景點地圖"></div></div>
-    <p class="note">座標是估的。點標記，用彈窗連結在 Google 地圖核對。寧平、下龍灣太遠，沒有標。住宿的座標來自 OpenStreetMap。</p>
+    <p class="note">點日期可以看當天的行程與地圖。</p>
   </section>
 
   <section id="d1" class="day" aria-labelledby="h-d1">
@@ -277,12 +297,11 @@
 
   <section id="d4" class="day" aria-labelledby="h-d4">
     <h2 id="h-d4">12/31 <small>Day 4 · 週四</small></h2>
-    <div class="group"><h3>摘要</h3><div class="cands"><article class="cand sum"><ul><li>白天：陶瓷村（你指定。細節見下方「行程」卡片）；晚上跨年</li><li>要熬夜，白天別排太累</li></ul></article></div></div>
+    <div class="group"><h3>摘要</h3><div class="cands"><article class="cand sum"><ul><li>白天：陶瓷村（你指定。細節見下方「行程」卡片）；晚上在酒吧跨年（你決定，哪一家 11 月再決定）</li><li>要熬夜，白天別排太累</li></ul></article></div></div>
     <div id="c-d4" class="daycands"></div>
-    <div class="group"><h3>議題<small>3 項</small></h3><div class="cands"><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>怎麼跨年，去哪家酒吧（見下表）</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>還劍湖倒數與煙火的地點</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>酒吧 12/31 是否營業、要不要訂位（見下表）</p></article></div></div>
+    <div class="group"><h3>議題<small>3 項</small></h3><div class="cands"><article class="cand issue"><div class="tags"><span class="tag was">決定</span></div><p>去哪家酒吧，11 月再決定（6 家列在上方備選，比較見下表）</p></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>還劍湖倒數與煙火的地點</p><details class="more"><summary>更多</summary><p>2026 官方公告未公布。往年：2025 年 19:00–24:00 在 Dong Kinh Nghia Thuc 廣場辦活動，煙火 23:45 起；2024 年 17:00 起封路。煙火方向會影響選哪家酒吧</p></details></article><article class="cand issue"><div class="tags"><span class="tag dur">核對</span></div><p>酒吧 12/31 是否營業、要不要訂位（見下表）</p></article></div></div>
     <details class="fold">
-      <summary><h3>跨年酒吧選哪家</h3><small>6 家 · 全部未決</small></summary>
-      <p class="scrollhint" style="display:block">表格可以左右滑動。</p>
+      <summary><h3>跨年酒吧選哪家</h3><small>6 家 · 11 月決定</small></summary>
       <div class="tablewrap">
         <table class="wide">
           <thead><tr><th>酒吧</th><th>營業時間</th><th>離住宿</th><th>景觀</th><th>價位</th><th>服裝</th><th>2026 跨年</th><th>訂位</th><th>評價</th><th>備註</th></tr></thead>
@@ -368,8 +387,8 @@
   var pool = [
     { name: '市區景點', hint: '半日以內', items: [
       { n: '胡志明陵區', q: 'Ho Chi Minh Mausoleum', tags: ['半日', '上午'], d: '我記得陵區多半只在上午開放，週一和週五休館。未核對。一柱寺、主席府在附近。', was: '原草案 12/29，暫列 12/31 白天' },
-      { n: '文廟', q: 'Temple of Literature', tags: ['半日'], d: '越南第一所大學。離住宿的距離未查，地圖座標是估的。', was: '原草案 12/29，改列 12/28' },
-      { n: '火爐監獄', q: 'Hoa Lo Prison', tags: ['半日'], d: '法國殖民時期的監獄。離住宿的距離未查，地圖座標是估的。', was: '原草案 12/29，改列 12/28' },
+      { n: '文廟', q: 'Temple of Literature', tags: ['半日'], d: '越南第一所大學。離住宿的距離未查。', was: '原草案 12/29，改列 12/28' },
+      { n: '火爐監獄', q: 'Hoa Lo Prison', tags: ['半日'], d: '法國殖民時期的監獄。離住宿的距離未查。', was: '原草案 12/29，改列 12/28' },
       { n: '水上木偶戲', q: 'Thang Long Water Puppet Theatre', tags: ['夜間'], d: '晚上場。週一到週六場次約 16:10、17:20、18:30、20:00，票 100,000–200,000 越南盾，11–3 月建議提前 3–7 天訂（旅遊網站資料，未核對）。', was: '原草案 12/29，曾列 12/28 晚上，改列 1/1（使用者指定）' }
     ]},
     { name: '近郊一日遊', hint: '要出城', items: [
@@ -387,10 +406,13 @@
       { n: '越南民族學博物館', q: 'Vietnam Museum of Ethnology', tags: ['半日'], d: '8:30–17:30，週一與春節休館，12/31（週四）有開。成人 40,000 越南盾。距舊城區約 8 公里，建議叫 Grab。來源：官方網站。', was: '原草案 12/31，改列 1/1', link: ['https://vme.org.vn', '官網（網址來自搜尋結果，我沒能開啟，未確認）'] },
       { n: '西湖與鎮國寺', q: 'Tran Quoc Pagoda', tags: ['半日'], d: '免費。開放時間各來源不一致，下午去兩種說法都涵蓋。距舊城區約 4 公里，Grab 約 50,000–100,000 越南盾。', was: '原草案 12/31，改列 1/1' }
     ]},
-    { name: '12/31 跨年夜', hint: '三選一 · 全部未決', items: [
-      { n: '還劍湖周邊', q: 'Hoan Kiem Lake', tags: ['夜間'], nye: true, d: '免費，氣氛最熱鬧。人很多，要防扒手。2026 官方公告未公布。往年：2025 年 19:00–24:00 在 Dong Kinh Nghia Thuc 廣場辦活動，煙火 23:45 起；2024 年 17:00 起封路。' },
-      { n: '高樓酒吧', nomap: true, tags: ['夜間'], nye: true, d: '室內看夜景比較舒服。要提早訂位，常有跨年套餐，價格較高。6 家候選見下方比較表。' },
-      { n: '飯店跨年晚宴', nomap: true, tags: ['夜間'], nye: true, d: '最省力。住宿 Tru 沒有屋頂酒吧，有大廳酒吧與 Tru Social 餐廳。12/31 有沒有活動未確認。' }
+    { name: '12/31 跨年酒吧', hint: '六選一 · 11 月再決定', items: [
+      { n: 'Moonlight Sky Bar', tags: ['夜間'], nye: true, d: '17:00–24:00（官網）。步行 2.0 公里、28 分。360 度看還劍湖、紅河、舊城區。官網沒有跨年活動或套餐。細節見下方比較表。' },
+      { n: 'Diamond Sky Bar', tags: ['夜間'], nye: true, d: '16:00–24:00。步行 1.9 公里、26 分。官網公布跨年 DJ、MC、屋頂看煙火，套餐 2 人 2,800,000 越南盾起（年份官網未標）。細節見下方比較表。' },
+      { n: 'Skyline Hanoi', tags: ['夜間'], nye: true, d: '11:00–23:00，午夜前關門。步行 1.8 公里、25 分。要在這裡倒數，得先問能不能延長營業。細節見下方比較表。' },
+      { n: 'Terraço Sky Bar', q: 'Terraço Sky Bar', tags: ['夜間'], nye: true, d: '17:00–24:00（官網）。步行 2.0 公里、27 分。360 度看還劍湖、玉山祠，煙火方向未確認。跨年活動未確認。細節見下方比較表。' },
+      { n: 'Majesty Sky Bar', tags: ['夜間'], nye: true, d: '17:00–24:00（另一來源寫 23:30）。步行 1.8 公里、25 分。看還劍湖與舊城區。跨年活動未確認。細節見下方比較表。' },
+      { n: 'La Nueva 飯店屋頂（Estrella）', q: 'La Nueva Hotel Estrella rooftop', tags: ['夜間'], nye: true, d: '18:00–23:59。步行 2.0 公里、28 分。2026/2 有評論稱整修中，現在是否重開未確認，資料最少。細節見下方比較表。' }
     ]},
     { name: '吃喝與購物', hint: '隨時可插', items: [
       { n: '烤肉米線', nomap: true, tags: ['用餐'], d: '河內烤肉米線（bún chả）。', was: '原草案 12/28 晚' },
@@ -407,7 +429,7 @@
     '水上木偶戲': 'd5', '文廟': 'd1', '火爐監獄': 'd1', 'Chả Cá Lã Vọng': 'd1', 'Bún chả Đắc Kim': 'd1', '蛋咖啡': 'd1', '舊城區買伴手禮': 'd1',
     '寧平': 'd3', '長安（Trang An）坐船': 'd3', '三谷（Tam Coc）坐船': 'd3', 'Mua 洞觀景台': 'd3', '華閭（Hoa Lu）古都': 'd3', '白殿寺（Bai Dinh）': 'd3', '碧洞寺（Bich Dong）': 'd3',
     '胡志明陵區': 'd4',
-    '越南民族學博物館': 'd5', '西湖與鎮國寺': 'd5', 'Lotte Mall West Lake': 'd5', '還劍湖周邊': 'd4', '高樓酒吧': 'd4', '飯店跨年晚宴': 'd4'
+    '越南民族學博物館': 'd5', '西湖與鎮國寺': 'd5', 'Lotte Mall West Lake': 'd5', 'Moonlight Sky Bar': 'd4', 'Diamond Sky Bar': 'd4', 'Skyline Hanoi': 'd4', 'Terraço Sky Bar': 'd4', 'Majesty Sky Bar': 'd4', 'La Nueva 飯店屋頂（Estrella）': 'd4'
   };  // anything not listed goes to 'und' (not yet assigned)
 
   function pct(h) { return (h - START) / SPAN * 100; }
@@ -866,6 +888,18 @@
     "qfull": false
   },
   {
+    "day": "d4",
+    "n": "跨年：酒吧",
+    "tags": ["夜間", "已決定"],
+    "nye": true,
+    "nomap": true,
+    "lines": [
+      "12/31 晚上在酒吧跨年（你決定）。",
+      "去哪一家 11 月再決定，6 家列在下方備選，比較見「跨年酒吧選哪家」表。",
+      "時段、訂位、套餐都還沒定。多數候選 24:00 關門，Skyline 23:00 就關。"
+    ]
+  },
+  {
     "day": "d5",
     "n": "樂天中心河內（Lotte Center）",
     "tags": ["半日", "已決定"],
@@ -958,34 +992,94 @@
     });
   });
 
-  // map: coordinates are approximate and unverified
-  if (window.L) {
-    var map = L.map('map', { scrollWheelZoom: false }).setView([21.032, 105.846], 13);
+  // 酒吧比較表：窄螢幕改成卡片時，每格要知道自己的欄名
+  document.querySelectorAll('table.wide').forEach(function (t) {
+    var heads = Array.prototype.map.call(t.querySelectorAll('thead th'), function (th) { return th.textContent; });
+    t.querySelectorAll('tbody tr').forEach(function (tr) {
+      Array.prototype.forEach.call(tr.children, function (td, i) {
+        td.setAttribute('data-label', heads[i] || '');
+        // 格子內容包成一塊，卡片版的「欄名｜內容」兩欄才不會被 <b>、<br>、<a> 拆散
+        var w = el('div');
+        while (td.firstChild) w.appendChild(td.firstChild);
+        td.appendChild(w);
+      });
+    });
+  });
+
+  // map: coordinates checked 2026-10-15 (OSM + Google/Wikipedia); 內排機場 assumes T2
+  // [名稱, 緯度, 經度, 類型, 說明, 出現在哪幾天的地圖, 對應的卡片名稱]
+  var places = [
+    ['胡志明陵區', 21.0367831, 105.8346888, 'sight', '半日 · 只開上午，週一、週五不開', ['d4'], ['胡志明陵區']],
+    ['文廟', 21.0276496, 105.8355176, 'sight', '半日 · 點在正門', ['d1'], ['文廟']],
+    ['火爐監獄', 21.0254222, 105.8465093, 'sight', '半日', ['d1'], ['火爐監獄']],
+    ['昇龍水上木偶戲院', 21.0316826, 105.8533466, 'sight', '夜間場', ['d5'], ['水上木偶戲']],
+    ['還劍湖', 21.0288313, 105.8525357, 'sight', '舊城區散步 · 12/31 跨年人潮', ['d1', 'd4'], ['還劍湖與舊城區散步']],
+    ['越南民族學博物館', 21.0403422, 105.7987354, 'sight', '8:30–17:30 · 距舊城區約 8 公里', ['d5'], ['越南民族學博物館']],
+    ['西湖與鎮國寺', 21.0478837, 105.8368375, 'sight', '免費 · 距舊城區約 4 公里', ['d5'], ['西湖與鎮國寺']],
+    ['Chả Cá Lã Vọng', 21.0356592, 105.8491688, 'food', 'Cha Ca 街 14 號', ['d1'], ['Chả Cá Lã Vọng']],
+    ['Bún chả Đắc Kim', 21.0322493, 105.8482095, 'food', 'Hàng Mành 街 1 號', ['d1'], ['Bún chả Đắc Kim']],
+    ['Moonlight Sky Bar', 21.0342255, 105.8532035, 'bar', '馬梅街 94 號 11 樓', ['d4'], ['Moonlight Sky Bar']],
+    ['Diamond Sky Bar', 21.0345341, 105.8520892, 'bar', 'Ta Hien 街 22 號', ['d4'], ['Diamond Sky Bar']],
+    ['陶瓷村（Bat Trang）', 20.9749029, 105.9118968, 'sight', '半日 · 在市區東南郊 · 點在陶瓷市場', ['d4'], ['陶瓷村（Bat Trang）']],
+    ['樂天中心（Lotte Center）', 21.032199, 105.8123834, 'sight', '1/1 · 54 Liễu Giai · 觀景台 65 樓', ['d5'], ['樂天中心河內（Lotte Center）']],
+    ['Vincom Center Metropolis', 21.0313057, 105.8147359, 'sight', '1/1 · 29 Liễu Giai · 離樂天中心步行 4 分', ['d5'], ['Vincom Center Metropolis']],
+    ['Tru by Hilton Hanoi Station', 21.02385, 105.84185, 'hotel', '住宿 · 115 Tran Hung Dao · 河內火車站正對面', ['d1', 'd4', 'd5', 'd6', 'stay'], []],
+    ['火車咖啡街（Phùng Hưng 段）', 21.0301529, 105.8440687, 'sight', '12/28 · Trần Phú 街平交道 · 另有 Lê Duẩn 段在火車站南邊', ['d1'], ['火車咖啡街']],
+    ['三十六古街（Hàng Bạc 街）', 21.03393, 105.85215, 'sight', '12/28 · 住宿步行 26 分、1.9 公里', ['d1'], ['三十六古街']],
+    ['龍邊市場', 21.0414363, 105.8509912, 'sight', '1/2 · 批發市場，夜間到清晨最熱鬧（時段未確認）', ['d6'], ['龍邊市場（Chợ Long Biên）']],
+    ['同春市場', 21.0380961, 105.8494029, 'sight', '1/2 · 室內市場 · 到龍邊步行 7 分', ['d6'], ['同春市場（Chợ Đồng Xuân）']],
+    ['內排機場', 21.2171326, 105.7922087, 'air', '去程降落、回程起飛 · 點在 T2 國際航廈（假設走 T2，未確認）', ['d1', 'd6', 'stay'], []]
+  ];
+  var PIN_LABEL = { sight: '景點', food: '餐廳', bar: '跨年酒吧', air: '機場', hotel: '住宿' };
+  var FAR = { d2: '這天在下龍灣，離市區太遠，地圖沒有標。', d3: '這天在寧平，離市區太遠，地圖沒有標。' };
+
+  // 每天的地圖區塊放在「摘要」後面；地圖本身等那天第一次顯示時才建立
+  var maps = {};
+  function mapSlot(d) {
+    var sec = document.getElementById(d);
+    var box = el('div', 'group daymap');
+    box.appendChild(el('h3', '', '地圖'));
+    var after = d === 'stay' ? null : sec.querySelector('.group');
+    if (after) after.after(box); else sec.appendChild(box);
+    return box;
+  }
+  ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'stay'].forEach(function (d) {
+    var box = mapSlot(d);
+    if (FAR[d]) { box.appendChild(el('p', 'note', FAR[d])); return; }
+    var mine = places.filter(function (p) { return p[5].indexOf(d) >= 0; });
+    var legend = el('div', 'legend');
+    legend.setAttribute('aria-label', '地圖圖例');
+    Object.keys(PIN_LABEL).forEach(function (k) {
+      if (!mine.some(function (p) { return p[3] === k; })) return;
+      var s = el('span'); var i = el('i', 'sw pin ' + k); i.style.width = '14px';
+      s.appendChild(i); s.appendChild(document.createTextNode(PIN_LABEL[k]));
+      legend.appendChild(s);
+    });
+    box.appendChild(legend);
+    var mb = el('div', 'mapbox'); var m = el('div', 'map');
+    m.setAttribute('role', 'application'); m.setAttribute('aria-label', '當天地圖');
+    mb.appendChild(m); box.appendChild(mb);
+    var covered = [].concat.apply([], mine.map(function (p) { return p[6]; }));
+    var missing = (sureBy[d] || []).map(function (it) { return it.n; }).filter(function (n) { return covered.indexOf(n) < 0; });
+    var note = '座標在 2026/10/15 用 OpenStreetMap 與 Google 地圖或維基百科核對過，兩個來源相差都在 70 公尺內。內排機場標在 T2 國際航廈，航班用哪座航廈未確認。';
+    if (missing.length) note += '這天的行程裡，' + missing.join('、') + '還沒有座標，地圖沒有標。';
+    box.appendChild(el('p', 'note', note));
+    maps[d] = { node: m, places: mine };
+  });
+
+  function drawMap(d) {
+    var rec = maps[d];
+    if (!rec) return;
+    if (rec.map) { rec.map.invalidateSize(); return; }
+    if (!window.L) { rec.node.textContent = '地圖載入失敗，請檢查網路。'; return; }
+    var map = rec.map = L.map(rec.node, { scrollWheelZoom: false });
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
-    var places = [
-      ['胡志明陵區', 21.0368, 105.8346, 'sight', '半日 · 上午。休館日未核對'],
-      ['文廟', 21.0286, 105.8355, 'sight', '半日'],
-      ['火爐監獄', 21.0252, 105.8467, 'sight', '半日'],
-      ['昇龍水上木偶戲院', 21.0316826, 105.8533466, 'sight', '夜間場'],
-      ['還劍湖', 21.0285, 105.8522, 'sight', '舊城區散步 · 12/31 跨年人潮'],
-      ['越南民族學博物館', 21.0407, 105.7985, 'sight', '8:30–17:30 · 距舊城區約 8 公里'],
-      ['西湖與鎮國寺', 21.0486, 105.8365, 'sight', '免費 · 距舊城區約 4 公里'],
-      ['Chả Cá Lã Vọng', 21.0343, 105.8503, 'food', 'Cha Ca 街 14 號'],
-      ['Bún chả Đắc Kim', 21.0334, 105.8490, 'food', 'Hàng Mành 街 1 號'],
-      ['Moonlight Sky Bar', 21.0344, 105.8510, 'bar', '馬梅街 94 號 11 樓'],
-      ['Diamond Sky Bar', 21.0348, 105.8532, 'bar', 'Ta Hien 街 22 號'],
-      ['陶瓷村（Bat Trang）', 20.9758, 105.9141, 'sight', '半日 · 在市區東南郊'],
-      ['樂天中心（Lotte Center）', 21.032199, 105.8123834, 'sight', '1/1 · 54 Liễu Giai · 觀景台 65 樓'],
-      ['Vincom Center Metropolis', 21.0313057, 105.8147359, 'sight', '1/1 · 29 Liễu Giai · 離樂天中心步行 4 分'],
-      ['Tru by Hilton Hanoi Station', 21.02385, 105.84185, 'hotel', '住宿 · 115 Tran Hung Dao · 河內火車站正對面'],
-      ['內排機場', 21.2212, 105.8072, 'air', '去程降落、回程起飛']
-    ];
     var pts = [];
-    places.forEach(function (p) {
+    rec.places.forEach(function (p) {
       var icon = L.divIcon({ className: '', html: '<div class="pin ' + p[3] + '"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
-      var m = L.marker([p[1], p[2]], { icon: icon, title: p[0] }).addTo(map);
+      var mk = L.marker([p[1], p[2]], { icon: icon, title: p[0] }).addTo(map);
       var box = document.createElement('div');
       box.appendChild(el('b', '', p[0]));
       box.appendChild(document.createElement('br'));
@@ -995,13 +1089,50 @@
       a.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(p[0].replace(/（.*/, '') + ' Hanoi');
       a.target = '_blank'; a.rel = 'noopener';
       box.appendChild(a);
-      m.bindPopup(box);
+      mk.bindPopup(box);
       if (p[3] !== 'air') pts.push([p[1], p[2]]);
     });
-    map.fitBounds(pts, { padding: [24, 24] });
-  } else {
-    document.getElementById('map').textContent = '地圖載入失敗，請檢查網路。';
+    // 機場離市區約 20 公里，不算進取景範圍；只有機場時才用它取景
+    if (!pts.length) pts = rec.places.map(function (p) { return [p[1], p[2]]; });
+    if (pts.length > 1) map.fitBounds(pts, { padding: [28, 28], maxZoom: 16 });
+    else map.setView(pts[0], 15);
   }
+
+  // 一次只顯示一個畫面：總覽、某一天、未排日期或住宿
+  var nav = document.getElementById('tabs');
+  var tabs = Array.prototype.slice.call(nav.querySelectorAll('a'));
+  var VIEWS = tabs.map(function (a) { return a.getAttribute('href').slice(1); });
+  VIEWS.forEach(function (v, i) {
+    var sec = document.getElementById(v);
+    var pg = el('nav', 'pager');
+    pg.setAttribute('aria-label', '前後一天');
+    if (i > 0) { var p = el('a', 'prev', '← ' + tabs[i - 1].textContent); p.href = '#' + VIEWS[i - 1]; pg.appendChild(p); }
+    if (i < VIEWS.length - 1) { var n = el('a', 'next', tabs[i + 1].textContent + ' →'); n.href = '#' + VIEWS[i + 1]; pg.appendChild(n); }
+    sec.appendChild(pg);
+  });
+
+  function show(id, scroll) {
+    if (VIEWS.indexOf(id) < 0) id = VIEWS[0];
+    VIEWS.forEach(function (v) { document.getElementById(v).hidden = v !== id; });
+    tabs.forEach(function (a) {
+      var on = a.getAttribute('href') === '#' + id;
+      if (on) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+    drawMap(id);
+    if (scroll && window.scrollY > nav.offsetTop) window.scrollTo({ top: nav.offsetTop, behavior: 'instant' });
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var id = a.getAttribute('href').slice(1);
+    if (VIEWS.indexOf(id) < 0) return;
+    e.preventDefault();
+    if (location.hash !== '#' + id) history.pushState(null, '', '#' + id);
+    show(id, true);
+  });
+  window.addEventListener('popstate', function () { show(location.hash.slice(1), true); });
+  show(location.hash.slice(1), false);
 })();
 </script>
 </body>
